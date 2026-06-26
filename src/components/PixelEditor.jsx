@@ -141,6 +141,16 @@ export default function PixelEditor({
 
   const setZoom = (v) => { zoomRef.current = v; setZoomState(v) }
 
+  useEffect(() => {
+    const scrollEl = scrollRef.current
+    if (!scrollEl) return
+    const fitZoom = Math.min(
+      (scrollEl.clientWidth - 40) / SIZE,
+      (scrollEl.clientHeight - 40) / SIZE
+    )
+    setZoom(Math.max(0.5, Math.min(12, fitZoom)))
+  }, [])
+
   const redrawOverlay = useCallback(() => {
     const overlay = overlayRef.current
     if (!overlay) return
@@ -177,9 +187,9 @@ export default function PixelEditor({
     // Labels
     ctx.textBaseline = 'top'
     for (const label of labels) {
-      const fs = 6
+      const fs = 9
       ctx.font = `bold ${fs}px sans-serif`
-      ctx.fillStyle = 'rgba(0,0,0,0.55)'
+      ctx.fillStyle = 'rgba(0,0,0,0.6)'
       ctx.fillText(label.name, label.x * SCALE + 3, label.y * SCALE + 3)
       ctx.fillStyle = label.color
       ctx.fillText(label.name, label.x * SCALE + 2, label.y * SCALE + 2)
@@ -517,7 +527,7 @@ export default function PixelEditor({
 
   return (
     <div className="pixel-editor-scroll" ref={scrollRef}>
-      <div style={{ width: SIZE * zoom, height: SIZE * zoom, position: 'relative', flexShrink: 0 }}>
+      <div style={{ width: SIZE * zoom, height: SIZE * zoom, position: 'relative', flexShrink: 0, margin: 'auto' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, width: SIZE, height: SIZE, transformOrigin: '0 0', transform: `scale(${zoom})` }}>
           <div className="pixel-editor-wrap" style={{ width: SIZE, height: SIZE, position: 'relative' }}>
             {/* Layer 1: skin pixels */}
@@ -525,7 +535,7 @@ export default function PixelEditor({
               style={{ position: 'absolute', top: 0, left: 0, imageRendering: 'pixelated' }} />
             {/* Layer 2: grid + labels */}
             <canvas ref={overlayRef} width={SIZE} height={SIZE}
-              style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }} />
+              style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', imageRendering: 'auto' }} />
             {/* Layer 3: selection (marching ants) */}
             <canvas ref={selectionCanvasRef} width={SIZE} height={SIZE}
               style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }} />

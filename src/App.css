@@ -212,11 +212,8 @@ body { margin: 0; background: var(--mc-dark); font-family: 'Segoe UI', system-ui
   flex: 1;
   overflow: auto;
   display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  padding: 12px;
+  padding: 20px;
   background: #4a4a4a;
-  image-rendering: pixelated;
 }
 
 .pixel-editor-wrap {
