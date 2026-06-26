@@ -105,6 +105,17 @@ function buildSelectionPath(selection) {
   return path
 }
 
+function applySelectionMode(newSel, mode, currentSel) {
+  if (!newSel || newSel.size === 0) return mode === 'replace' ? null : currentSel
+  if (mode === 'union' && currentSel) return new Set([...currentSel, ...newSel])
+  if (mode === 'diff' && currentSel) {
+    const next = new Set(currentSel)
+    for (const k of newSel) next.delete(k)
+    return next.size > 0 ? next : null
+  }
+  return newSel
+}
+
 function strokeMarchingAnts(ctx, path, dashOffset, c1 = 'white', c2 = 'rgba(0,0,0,0.75)') {
   ctx.lineWidth = 1.5
   ctx.setLineDash([4, 4])
@@ -139,6 +150,9 @@ export default function PixelEditor({
   const isPanning = useRef(false)
   const panStart = useRef({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 })
   const rectStartRef = useRef(null)
+  const selModeRef = useRef('replace')
+  const selectionRef = useRef(selection)
+  selectionRef.current = selection
   const dashOffsetRef = useRef(0)
   const selAnimRef = useRef(null)
 
@@ -420,7 +434,7 @@ export default function PixelEditor({
     }
 
     if (activeTool === 'rect-select') {
-      // Cancel previous marching ants animation while dragging
+      selModeRef.current = e.shiftKey ? 'union' : e.altKey ? 'diff' : 'replace'
       if (selAnimRef.current) cancelAnimationFrame(selAnimRef.current)
       rectStartRef.current = { x: px, y: py }
       drawRectPreview(px, py, px, py)
@@ -428,10 +442,11 @@ export default function PixelEditor({
     }
 
     if (activeTool === 'magic-wand') {
+      const mode = e.shiftKey ? 'union' : e.altKey ? 'diff' : 'replace'
       const ctx = skinCanvas.getContext('2d')
       const imageData = ctx.getImageData(0, 0, 64, 64)
       const newSel = magicWandSelect(imageData, px, py, contiguous)
-      onSelectionChange(newSel.size > 0 ? newSel : null)
+      onSelectionChange(applySelectionMode(newSel, mode, selection))
       return
     }
 
@@ -471,7 +486,7 @@ export default function PixelEditor({
       for (let y = minY; y <= maxY; y++)
         for (let x = minX; x <= maxX; x++)
           newSel.add(y * 64 + x)
-      onSelectionChange(newSel.size > 0 ? newSel : null)
+      onSelectionChange(applySelectionMode(newSel, selModeRef.current, selectionRef.current))
       return
     }
 

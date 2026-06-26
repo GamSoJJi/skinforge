@@ -302,7 +302,7 @@ function ResultCanvas({ merged }) {
 
 // ── SkinMergeModal ────────────────────────────────────────────────────────────
 
-export default function SkinMergeModal({ onClose }) {
+export default function SkinMergeModal({ onClose, onMerge }) {
   const [skinA, setSkinA] = useState(null)
   const [skinB, setSkinB] = useState(null)
   const [selA, setSelA]   = useState(null)
@@ -350,14 +350,9 @@ export default function SkinMergeModal({ onClose }) {
     setMerged(out)
   }, [skinA, skinB, selB])
 
-  const handleDownload = () => {
+  const handleApply = () => {
     if (!merged) return
-    merged.convertToBlob({ type: 'image/png' }).then(blob => {
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url; a.download = 'merged_skin.png'; a.click()
-      URL.revokeObjectURL(url)
-    })
+    onMerge(merged)
   }
 
   useEffect(() => {
@@ -434,9 +429,9 @@ export default function SkinMergeModal({ onClose }) {
 
       <div className="merge-footer">
         <span className="merge-hint">{hint}</span>
-        <button className="mc-btn" onClick={handleDownload} disabled={!merged}
-          style={{ fontWeight: 700, fontSize: '0.75rem' }}>
-          PNG 다운로드
+        <button className="mc-btn" onClick={handleApply} disabled={!merged || !selB || selB.size === 0}
+          style={{ fontWeight: 700, fontSize: '0.75rem', background: merged && selB?.size > 0 ? 'rgba(80,150,255,0.25)' : '' }}>
+          합치기
         </button>
       </div>
     </div>

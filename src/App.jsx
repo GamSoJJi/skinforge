@@ -239,6 +239,15 @@ export default function App() {
     })
   }, [skinCanvas])
 
+  const handleMergeApply = useCallback((mergedCanvas) => {
+    pushUndo()
+    const ctx = skinCanvas.getContext('2d')
+    ctx.clearRect(0, 0, 64, 64)
+    ctx.drawImage(mergedCanvas, 0, 0)
+    setSkinVersion((v) => v + 1)
+    setMergeOpen(false)
+  }, [skinCanvas, pushUndo])
+
   const handleColorPicked = useCallback((color) => {
     setActiveColor(color)
     setActiveTool('pen')
@@ -453,7 +462,7 @@ export default function App() {
           onMouseDown={handleResizeStart}
         />
         <div className="canvas-area">
-          {mergeOpen ? <SkinMergeModal onClose={() => setMergeOpen(false)} /> : <>
+          {mergeOpen ? <SkinMergeModal onClose={() => setMergeOpen(false)} onMerge={handleMergeApply} /> : <>
           <PixelEditor
             skinCanvas={skinCanvas}
             skinVersion={skinVersion}
