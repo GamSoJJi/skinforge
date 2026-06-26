@@ -9,10 +9,11 @@ export default function SkinViewer3D({ skinCanvas, skinVersion }) {
 
   useEffect(() => {
     if (!canvasRef.current) return
+    const container = canvasRef.current.parentElement
     const viewer = new skinview3d.SkinViewer({
       canvas: canvasRef.current,
-      width: canvasRef.current.parentElement?.clientWidth || 360,
-      height: canvasRef.current.parentElement?.clientHeight || 500,
+      width: container?.clientWidth || 420,
+      height: container?.clientHeight || 500,
     })
     viewer.background = 0x2a2a2a
     viewer.autoRotate = true
@@ -21,7 +22,14 @@ export default function SkinViewer3D({ skinCanvas, skinVersion }) {
     viewer.animation.speed = 0.8
     viewer.zoom = 0.9
     viewerRef.current = viewer
-    return () => viewer.dispose()
+
+    const observer = new ResizeObserver(() => {
+      if (!container) return
+      viewer.setSize(container.clientWidth, container.clientHeight)
+    })
+    if (container) observer.observe(container)
+
+    return () => { observer.disconnect(); viewer.dispose() }
   }, [])
 
   useEffect(() => {

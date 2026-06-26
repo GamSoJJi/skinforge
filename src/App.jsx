@@ -191,6 +191,30 @@ export default function App() {
   const REDO_KEY = isMac ? `${MOD}⇧Z` : `${MOD}Y`
 
   const [showGuide, setShowGuide] = useState(true)
+  const [viewerWidth, setViewerWidth] = useState(420)
+  const [isDraggingViewer, setIsDraggingViewer] = useState(false)
+
+  const handleResizeStart = useCallback((e) => {
+    e.preventDefault()
+    let lastX = e.clientX
+    setIsDraggingViewer(true)
+    document.body.classList.add('resizing-viewer')
+
+    const onMove = (e) => {
+      const delta = e.clientX - lastX
+      lastX = e.clientX
+      setViewerWidth(w => Math.max(180, Math.min(700, w + delta)))
+    }
+    const onUp = () => {
+      setIsDraggingViewer(false)
+      document.body.classList.remove('resizing-viewer')
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }, [])
+
   const [guideTip, setGuideTip] = useState(null)
   const showGuideTip = useCallback((e, text) => {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -231,9 +255,13 @@ export default function App() {
         </nav>
       </header>
       <div className="workspace">
-        <div className="viewer-panel">
+        <div className="viewer-panel" style={{ width: viewerWidth }}>
           <SkinViewer3D skinCanvas={skinCanvas} skinVersion={skinVersion} />
         </div>
+        <div
+          className={`resize-handle ${isDraggingViewer ? 'dragging' : ''}`}
+          onMouseDown={handleResizeStart}
+        />
         <div className="canvas-area">
           <PixelEditor
             skinCanvas={skinCanvas}

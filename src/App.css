@@ -104,18 +104,46 @@ body { margin: 0; background: var(--mc-dark); font-family: 'Segoe UI', system-ui
   background: rgba(255,255,255,0.12);
 }
 
-.workspace { display: flex; flex: 1; overflow: hidden; gap: 3px; padding: 3px; background: var(--mc-dark); }
+.workspace { display: flex; flex: 1; overflow: hidden; gap: 0; padding: 3px; background: var(--mc-dark); }
 
 /* ─── 3D Viewer ─── */
 .viewer-panel {
-  flex: 0 0 var(--viewer-w);
   background: #2a2a2a;
   border: 3px solid var(--mc-border-dark);
-  border-right-color: var(--mc-border-light);
+  border-right: none;
   border-bottom-color: var(--mc-border-light);
   position: relative;
   overflow: hidden;
+  flex-shrink: 0;
 }
+
+/* ─── Resize Handle ─── */
+.resize-handle {
+  width: 5px;
+  flex-shrink: 0;
+  background: var(--mc-border-dark);
+  cursor: col-resize;
+  position: relative;
+  transition: background 0.15s;
+  border-top: 3px solid var(--mc-border-dark);
+  border-bottom: 3px solid var(--mc-border-dark);
+}
+.resize-handle:hover,
+.resize-handle.dragging {
+  background: #5566aa;
+}
+.resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 1px;
+}
+body.resizing-viewer { cursor: col-resize !important; user-select: none; }
 
 /* ─── Canvas Area ─── */
 .canvas-area {
