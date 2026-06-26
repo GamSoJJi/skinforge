@@ -5,6 +5,7 @@ import ToolPanel from './components/ToolPanel'
 import ColorPanel from './components/ColorPanel'
 import ColorReplacePanel from './components/ColorReplacePanel'
 import ShadeRemapPanel from './components/ShadeRemapPanel'
+import SkinMergeModal from './components/SkinMergeModal'
 import TipBanner from './components/TipBanner'
 import './App.css'
 
@@ -68,6 +69,7 @@ export default function App() {
   const [contiguous, setContiguous] = useState(true)
   const [uploadCount, setUploadCount] = useState(0)
   const [fileMenuOpen, setFileMenuOpen] = useState(false)
+  const [mergeOpen, setMergeOpen] = useState(false)
   const [colorMenuOpen, setColorMenuOpen] = useState(false)
   const [historyPalette, setHistoryPalette] = useState(
     () => DEFAULT_PALETTE.map(c => ({ color: c, pinned: false }))
@@ -408,6 +410,11 @@ export default function App() {
                   className="mc-dropdown-item"
                   onClick={() => { handleDownload(); setFileMenuOpen(false) }}
                 >내보내기</button>
+                <div className="mc-dropdown-sep" />
+                <button
+                  className="mc-dropdown-item"
+                  onClick={() => { setMergeOpen(true); setFileMenuOpen(false) }}
+                >스킨 합치기</button>
               </div>
             )}
           </div>
@@ -555,6 +562,7 @@ export default function App() {
         onClose={() => { setColorReplaceOpen(false); setPickingSlot(null); setPickingPanel(null) }}
       />
     )}
+    {mergeOpen && <SkinMergeModal onClose={() => setMergeOpen(false)} />}
     {shadeRemapOpen && (
       <ShadeRemapPanel
         colors={shadeColors}
