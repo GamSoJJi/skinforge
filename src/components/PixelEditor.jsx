@@ -122,6 +122,7 @@ export default function PixelEditor({
   activeTool, activeColor, onColorPicked,
   brushSize, brushShape, skinType, showGuide,
   selection, onSelectionChange, contiguous,
+  modalPickingSlot, onModalColorPick,
 }) {
   const canvasRef = useRef(null)
   const overlayRef = useRef(null)
@@ -392,6 +393,13 @@ export default function PixelEditor({
 
     const [px, py] = getPixelCoords(e)
 
+    if (modalPickingSlot !== null) {
+      if (!skinCanvas) return
+      const d = skinCanvas.getContext('2d').getImageData(px, py, 1, 1).data
+      if (d[3] > 0) onModalColorPick('#' + [d[0], d[1], d[2]].map(v => v.toString(16).padStart(2, '0')).join(''))
+      return
+    }
+
     if (activeTool === 'rect-select') {
       // Cancel previous marching ants animation while dragging
       if (selAnimRef.current) cancelAnimationFrame(selAnimRef.current)
@@ -524,6 +532,7 @@ export default function PixelEditor({
   }, [])
 
   const cursorStyle =
+    modalPickingSlot !== null    ? 'crosshair' :
     activeTool === 'rect-select' ? 'crosshair' :
     activeTool === 'magic-wand'  ? 'cell' : 'none'
 

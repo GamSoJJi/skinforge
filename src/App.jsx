@@ -3,7 +3,16 @@ import SkinViewer3D from './components/SkinViewer3D'
 import PixelEditor from './components/PixelEditor'
 import ToolPanel from './components/ToolPanel'
 import ColorPanel from './components/ColorPanel'
+import ColorReplaceModal from './components/ColorReplaceModal'
 import './App.css'
+
+function hexToRgb(hex) {
+  return {
+    r: parseInt(hex.slice(1, 3), 16),
+    g: parseInt(hex.slice(3, 5), 16),
+    b: parseInt(hex.slice(5, 7), 16),
+  }
+}
 
 const DEFAULT_PALETTE = [
   '#000000', '#ffffff', '#9d9d9d', '#474747',
@@ -115,7 +124,10 @@ export default function App() {
       if ((e.metaKey || e.ctrlKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
         e.preventDefault(); redo()
       }
-      if (e.key === 'Escape') { setSelection(null); return }
+      if (e.key === 'Escape') {
+        if (pickingSlot !== null) { setPickingSlot(null); document.body.classList.remove('picking-color'); return }
+        setSelection(null); return
+      }
       if (document.activeElement?.tagName === 'INPUT') return
       if (e.key === 'b') setActiveTool('pen')
       if (e.key === 'e') setActiveTool('eraser')
@@ -191,6 +203,41 @@ export default function App() {
   const REDO_KEY = isMac ? `${MOD}⇧Z` : `${MOD}Y`
 
   const [showGuide, setShowGuide] = useState(true)
+  // ─── Color Replace Modal ───────────────────────────────
+  const [colorReplaceOpen, setColorReplaceOpen] = useState(false)
+  const [replaceColors, setReplaceColors] = useState(['', ''])
+  const [pickingSlot, setPickingSlot] = useState(null)
+
+  const handlePickStart = useCallback((slot) => {
+    setPickingSlot(slot)
+    document.body.classList.add('picking-color')
+  }, [])
+
+  const handleModalColorPick = useCallback((color) => {
+    setReplaceColors(prev => { const n = [...prev]; n[pickingSlot] = color; return n })
+    setPickingSlot(null)
+    document.body.classList.remove('picking-color')
+  }, [pickingSlot])
+
+  const handleReplaceColorChange = useCallback((slot, value) => {
+    setReplaceColors(prev => { const n = [...prev]; n[slot] = value; return n })
+  }, [])
+
+  const handleColorReplace = useCallback((from, to) => {
+    const f = hexToRgb(from), t = hexToRgb(to)
+    pushUndo()
+    const ctx = skinCanvas.getContext('2d')
+    const img = ctx.getImageData(0, 0, 64, 64)
+    const d = img.data
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i] === f.r && d[i+1] === f.g && d[i+2] === f.b && d[i+3] > 0) {
+        d[i] = t.r; d[i+1] = t.g; d[i+2] = t.b
+      }
+    }
+    ctx.putImageData(img, 0, 0)
+    setSkinVersion(v => v + 1)
+  }, [skinCanvas, pushUndo])
+
   const [viewerWidth, setViewerWidth] = useState(420)
   const [isDraggingViewer, setIsDraggingViewer] = useState(false)
 
@@ -223,11 +270,18 @@ export default function App() {
   const hideGuideTip = useCallback(() => setGuideTip(null), [])
 
   return (
+    <>
     <div className="app">
       <header className="mc-header">
         <img src="/favicon-32.png" alt="logo" className="mc-logo" />
         <h1 className="mc-title">SkinForge</h1>
         <nav className="mc-nav">
+          <div className="mc-menu-item">
+            <button
+              className={`mc-menu-btn ${colorReplaceOpen ? 'active' : ''}`}
+              onClick={() => setColorReplaceOpen(v => !v)}
+            >색상</button>
+          </div>
           <div className="mc-menu-item" ref={fileMenuRef}>
             <button
               className={`mc-menu-btn ${fileMenuOpen ? 'active' : ''}`}
@@ -278,6 +332,8 @@ export default function App() {
             selection={selection}
             onSelectionChange={setSelection}
             contiguous={contiguous}
+            modalPickingSlot={pickingSlot}
+            onModalColorPick={handleModalColorPick}
           />
           <div className="guide-bar">
             <div className="guide-group">
@@ -309,6 +365,14 @@ export default function App() {
               <span className={`guide-type-label ${skinType === 'slim' ? 'active' : ''}`}>슬림</span>
             </div>
             <div className="guide-bar-sep" />
+            <div className="guide-group">
+              <button
+                className={`mc-btn guide-bar-btn ${colorReplaceOpen ? 'active' : ''}`}
+                onClick={() => setColorReplaceOpen(v => !v)}
+                style={{ fontSize: '0.7rem', padding: '2px 10px', height: 22 }}
+              >색상 변경</button>
+            </div>
+            <div className="guide-divider" />
             <div className="guide-group">
               <button
                 className="mc-btn guide-bar-btn"
@@ -358,5 +422,16 @@ export default function App() {
         </div>
       </div>
     </div>
+    {colorReplaceOpen && (
+      <ColorReplaceModal
+        colors={replaceColors}
+        pickingSlot={pickingSlot}
+        onPickStart={handlePickStart}
+        onColorChange={handleReplaceColorChange}
+        onApply={handleColorReplace}
+        onClose={() => { setColorReplaceOpen(false); setPickingSlot(null); document.body.classList.remove('picking-color') }}
+      />
+    )}
+    </>
   )
 }
