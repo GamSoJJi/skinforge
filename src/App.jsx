@@ -4,6 +4,7 @@ import PixelEditor from './components/PixelEditor'
 import ToolPanel from './components/ToolPanel'
 import ColorPanel from './components/ColorPanel'
 import ColorReplacePanel from './components/ColorReplacePanel'
+import TipBanner from './components/TipBanner'
 import './App.css'
 
 function hexToRgb(hex) {
@@ -354,6 +355,7 @@ export default function App() {
             modalPickingSlot={pickingSlot}
             onModalColorPick={handleModalColorPick}
           />
+          <TipBanner />
           <div className="guide-bar">
             <div className="guide-group">
               <span className="guide-bar-label">가이드</span>

@@ -638,3 +638,29 @@ body.resizing-viewer { cursor: col-resize !important; user-select: none; }
 }
 
 body.picking-color { cursor: crosshair !important; }
+
+/* ─── Tip Banner ─── */
+.tip-banner {
+  position: absolute;
+  bottom: 40px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 3px;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  max-width: 280px;
+  z-index: 10;
+}
+
+.tip-icon { font-size: 0.75rem; flex-shrink: 0; }
+
+.tip-text {
+  font-size: 0.62rem;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.4;
+  letter-spacing: 0.2px;
+}
