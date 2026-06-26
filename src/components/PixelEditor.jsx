@@ -120,7 +120,7 @@ function strokeMarchingAnts(ctx, path, dashOffset) {
 export default function PixelEditor({
   skinCanvas, skinVersion, onPixelChange, onBeforeEdit,
   activeTool, activeColor, onColorPicked,
-  brushSize, brushShape, skinType,
+  brushSize, brushShape, skinType, showGuide,
   selection, onSelectionChange, contiguous,
 }) {
   const canvasRef = useRef(null)
@@ -157,15 +157,7 @@ export default function PixelEditor({
     const ctx = overlay.getContext('2d')
     ctx.clearRect(0, 0, SIZE, SIZE)
 
-    const { parts, labels } = getSkinLayout(skinType === 'slim')
-
-    for (const part of parts) {
-      if (part.unused) continue
-      ctx.fillStyle = part.color
-      ctx.fillRect(part.x * SCALE, part.y * SCALE, part.w * SCALE, part.h * SCALE)
-    }
-
-    // Grid lines
+    // Grid lines (always visible)
     ctx.lineWidth = 0.5
     for (let x = 0; x <= 64; x++) {
       ctx.strokeStyle = x % 8 === 0 ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)'
@@ -174,6 +166,16 @@ export default function PixelEditor({
     for (let y = 0; y <= 64; y++) {
       ctx.strokeStyle = y % 8 === 0 ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)'
       ctx.beginPath(); ctx.moveTo(0, y * SCALE); ctx.lineTo(SIZE, y * SCALE); ctx.stroke()
+    }
+
+    if (!showGuide) return
+
+    const { parts, labels } = getSkinLayout(skinType === 'slim')
+
+    for (const part of parts) {
+      if (part.unused) continue
+      ctx.fillStyle = part.color
+      ctx.fillRect(part.x * SCALE, part.y * SCALE, part.w * SCALE, part.h * SCALE)
     }
 
     // Part borders
@@ -194,7 +196,7 @@ export default function PixelEditor({
       ctx.fillStyle = label.color
       ctx.fillText(label.name, label.x * SCALE + 2, label.y * SCALE + 2)
     }
-  }, [skinType])
+  }, [skinType, showGuide])
 
   const redrawSkin = useCallback(() => {
     const canvas = canvasRef.current

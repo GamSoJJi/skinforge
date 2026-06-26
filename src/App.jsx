@@ -190,6 +190,7 @@ export default function App() {
   const MOD = isMac ? '⌘' : 'Ctrl+'
   const REDO_KEY = isMac ? `${MOD}⇧Z` : `${MOD}Y`
 
+  const [showGuide, setShowGuide] = useState(true)
   const [guideTip, setGuideTip] = useState(null)
   const showGuideTip = useCallback((e, text) => {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -245,12 +246,20 @@ export default function App() {
             brushSize={brushSize}
             brushShape={brushShape}
             skinType={skinType}
+            showGuide={showGuide}
             selection={selection}
             onSelectionChange={setSelection}
             contiguous={contiguous}
           />
           <div className="guide-bar">
             <span className="guide-bar-label">가이드</span>
+            <button
+              className={`mc-btn guide-bar-btn ${showGuide ? 'active' : ''}`}
+              onClick={() => setShowGuide((v) => !v)}
+              onMouseEnter={(e) => showGuideTip(e, showGuide ? '가이드 숨기기' : '가이드 보기')}
+              onMouseLeave={hideGuideTip}
+              style={{ fontSize: '0.75rem', minWidth: 36 }}
+            >{showGuide ? '👁' : '👁'}</button>
             <span className={`guide-type-label ${skinType === 'normal' ? 'active' : ''}`}>노말</span>
             <label className="toggle-switch">
               <input
