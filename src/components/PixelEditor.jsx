@@ -420,7 +420,7 @@ export default function PixelEditor({
     hasPainted.current = false
     if (activeTool !== 'eyedropper') onBeforeEdit()
     applyTool(e, selection)
-  }, [activeTool, getPixelCoords, skinCanvas, contiguous, onSelectionChange, onBeforeEdit, applyTool, selection, drawRectPreview])
+  }, [activeTool, getPixelCoords, skinCanvas, contiguous, onSelectionChange, onBeforeEdit, applyTool, selection, drawRectPreview, modalPickingSlot, onModalColorPick])
 
   const handleMouseMove = useCallback((e) => {
     const [px, py] = getPixelCoords(e)
