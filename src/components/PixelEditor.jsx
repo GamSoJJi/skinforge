@@ -126,6 +126,7 @@ export default function PixelEditor({
   shadePreview,
 }) {
   const canvasRef = useRef(null)
+  const guideCanvasRef = useRef(null)
   const overlayRef = useRef(null)
   const selectionCanvasRef = useRef(null)
   const cursorRef = useRef(null)
@@ -153,6 +154,23 @@ export default function PixelEditor({
     setZoom(Math.max(0.5, Math.min(12, fitZoom)))
   }, [])
 
+  // 스킨 아래 레이어: 실루엣 fills만 (색감에 영향 없도록 skin 픽셀 아래)
+  const redrawGuide = useCallback(() => {
+    const guide = guideCanvasRef.current
+    if (!guide) return
+    const ctx = guide.getContext('2d')
+    ctx.clearRect(0, 0, SIZE, SIZE)
+    const { parts } = getSkinLayout(skinType === 'slim')
+    for (const part of parts) {
+      if (part.unused) continue
+      ctx.fillStyle = showGuide
+        ? part.color
+        : part.color.replace(/[\d.]+\)$/, m => (parseFloat(m) * 0.35).toFixed(3) + ')')
+      ctx.fillRect(part.x * SCALE, part.y * SCALE, part.w * SCALE, part.h * SCALE)
+    }
+  }, [skinType, showGuide])
+
+  // 스킨 위 레이어: 그리드 + 테두리 + 레이블
   const redrawOverlay = useCallback(() => {
     const overlay = overlayRef.current
     if (!overlay) return
@@ -170,18 +188,9 @@ export default function PixelEditor({
       ctx.beginPath(); ctx.moveTo(0, y * SCALE); ctx.lineTo(SIZE, y * SCALE); ctx.stroke()
     }
 
-    const { parts, labels } = getSkinLayout(skinType === 'slim')
-
-    // 항상 실루엣 표시 — 가이드 꺼짐 시 아주 연하게, 켜짐 시 정상 불투명도
-    for (const part of parts) {
-      if (part.unused) continue
-      ctx.fillStyle = showGuide
-        ? part.color
-        : part.color.replace(/[\d.]+\)$/, m => (parseFloat(m) * 0.35).toFixed(3) + ')')
-      ctx.fillRect(part.x * SCALE, part.y * SCALE, part.w * SCALE, part.h * SCALE)
-    }
-
     if (!showGuide) return
+
+    const { parts, labels } = getSkinLayout(skinType === 'slim')
 
     // Part borders
     ctx.lineWidth = 1.5
@@ -347,6 +356,7 @@ export default function PixelEditor({
     ctx.setLineDash([])
   }, [])
 
+  useEffect(() => { redrawGuide() }, [redrawGuide])
   useEffect(() => { redrawSkin() }, [redrawSkin, skinVersion])
   useEffect(() => { redrawOverlay() }, [redrawOverlay])
 
@@ -550,10 +560,13 @@ export default function PixelEditor({
       <div style={{ width: SIZE * zoom, height: SIZE * zoom, position: 'relative', flexShrink: 0, margin: 'auto' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, width: SIZE, height: SIZE, transformOrigin: '0 0', transform: `scale(${zoom})` }}>
           <div className="pixel-editor-wrap" style={{ width: SIZE, height: SIZE, position: 'relative' }}>
+            {/* Layer 0: guide silhouette fills (below skin) */}
+            <canvas ref={guideCanvasRef} width={SIZE} height={SIZE}
+              style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }} />
             {/* Layer 1: skin pixels */}
             <canvas ref={canvasRef} width={SIZE} height={SIZE}
               style={{ position: 'absolute', top: 0, left: 0, imageRendering: 'pixelated' }} />
-            {/* Layer 2: grid + labels */}
+            {/* Layer 2: grid + borders + labels */}
             <canvas ref={overlayRef} width={SIZE} height={SIZE}
               style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', imageRendering: 'auto' }} />
             {/* Layer 3: selection (marching ants) */}
