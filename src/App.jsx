@@ -126,6 +126,12 @@ export default function App() {
       if ((e.metaKey || e.ctrlKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
         e.preventDefault(); redo()
       }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'r') {
+        e.preventDefault(); setColorReplaceOpen(v => !v)
+      }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'r') {
+        e.preventDefault(); setColorReplaceOpen(v => !v)
+      }
       if (e.key === 'Escape') {
         if (pickingSlotRef.current !== null) { setPickingSlot(null); return }
         setSelection(null); return
@@ -277,20 +283,6 @@ export default function App() {
         <img src="/favicon-32.png" alt="logo" className="mc-logo" />
         <h1 className="mc-title">SkinForge</h1>
         <nav className="mc-nav">
-          <div className="mc-menu-item" ref={colorMenuRef}>
-            <button
-              className={`mc-menu-btn ${colorMenuOpen ? 'active' : ''}`}
-              onClick={() => setColorMenuOpen(v => !v)}
-            >색상</button>
-            {colorMenuOpen && (
-              <div className="mc-dropdown">
-                <button
-                  className="mc-dropdown-item"
-                  onClick={() => { setColorReplaceOpen(true); setColorMenuOpen(false) }}
-                >색상 변경</button>
-              </div>
-            )}
-          </div>
           <div className="mc-menu-item" ref={fileMenuRef}>
             <button
               className={`mc-menu-btn ${fileMenuOpen ? 'active' : ''}`}
@@ -312,6 +304,23 @@ export default function App() {
                   className="mc-dropdown-item"
                   onClick={() => { handleDownload(); setFileMenuOpen(false) }}
                 >내보내기</button>
+              </div>
+            )}
+          </div>
+          <div className="mc-menu-item" ref={colorMenuRef}>
+            <button
+              className={`mc-menu-btn ${colorMenuOpen ? 'active' : ''}`}
+              onClick={() => setColorMenuOpen(v => !v)}
+            >색상</button>
+            {colorMenuOpen && (
+              <div className="mc-dropdown">
+                <button
+                  className="mc-dropdown-item"
+                  onClick={() => { setColorReplaceOpen(true); setColorMenuOpen(false) }}
+                >
+                  <span>색상 변경</span>
+                  <span className="mc-dropdown-shortcut">{MOD}⇧R</span>
+                </button>
               </div>
             )}
           </div>

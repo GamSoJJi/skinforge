@@ -88,7 +88,10 @@ body { margin: 0; background: var(--mc-dark); font-family: 'Segoe UI', system-ui
 }
 
 .mc-dropdown-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
   width: 100%;
   padding: 6px 14px;
   font-family: inherit;
@@ -99,6 +102,13 @@ body { margin: 0; background: var(--mc-dark); font-family: 'Segoe UI', system-ui
   cursor: pointer;
   text-align: left;
   box-sizing: border-box;
+}
+
+.mc-dropdown-shortcut {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.35);
+  flex-shrink: 0;
+  letter-spacing: 0.3px;
 }
 .mc-dropdown-item:hover {
   background: rgba(255,255,255,0.12);
