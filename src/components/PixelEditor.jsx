@@ -169,15 +169,18 @@ export default function PixelEditor({
       ctx.beginPath(); ctx.moveTo(0, y * SCALE); ctx.lineTo(SIZE, y * SCALE); ctx.stroke()
     }
 
-    if (!showGuide) return
-
     const { parts, labels } = getSkinLayout(skinType === 'slim')
 
+    // 항상 실루엣 표시 — 가이드 꺼짐 시 아주 연하게, 켜짐 시 정상 불투명도
     for (const part of parts) {
       if (part.unused) continue
-      ctx.fillStyle = part.color
+      ctx.fillStyle = showGuide
+        ? part.color
+        : part.color.replace(/[\d.]+\)$/, m => (parseFloat(m) * 0.35).toFixed(3) + ')')
       ctx.fillRect(part.x * SCALE, part.y * SCALE, part.w * SCALE, part.h * SCALE)
     }
+
+    if (!showGuide) return
 
     // Part borders
     ctx.lineWidth = 1.5
