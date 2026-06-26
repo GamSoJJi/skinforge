@@ -325,6 +325,7 @@ export default function App() {
   const handleShadeRemap = useCallback((sourceHex, targetHex, tolerance) => {
     const srcHsl = rgbToHsl(hexToRgb(sourceHex))
     const tgtHsl = rgbToHsl(hexToRgb(targetHex))
+    const lOffset = tgtHsl.l - srcHsl.l
     pushUndo()
     const ctx = skinCanvas.getContext('2d')
     const img = ctx.getImageData(0, 0, 64, 64)
@@ -334,7 +335,8 @@ export default function App() {
       const pHsl = rgbToHsl({ r: d[i], g: d[i + 1], b: d[i + 2] })
       const diff = Math.abs(pHsl.h - srcHsl.h)
       if (Math.min(diff, 360 - diff) <= tolerance) {
-        const { r, g, b } = hslToRgb({ h: tgtHsl.h, s: tgtHsl.s, l: pHsl.l })
+        const newL = Math.max(0, Math.min(1, pHsl.l + lOffset))
+        const { r, g, b } = hslToRgb({ h: tgtHsl.h, s: tgtHsl.s, l: newL })
         d[i] = r; d[i + 1] = g; d[i + 2] = b
       }
     }
