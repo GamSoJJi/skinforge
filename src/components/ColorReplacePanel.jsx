@@ -91,19 +91,12 @@ export default function ColorReplacePanel({ onClose, onApply, pickingSlot, onEye
             onHexChange={onColorChange}
           />
         </div>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button
-            className="mc-btn"
-            onClick={onClose}
-            style={{ flex: 1, justifyContent: 'center', fontSize: '0.72rem' }}
-          >취소</button>
-          <button
-            className="mc-btn"
-            onClick={() => onApply(colors[0], colors[1])}
-            disabled={!canApply}
-            style={{ flex: 1, justifyContent: 'center', fontSize: '0.72rem', fontWeight: 700 }}
-          >적용</button>
-        </div>
+        <button
+          className="mc-btn"
+          onClick={() => onApply(colors[0], colors[1])}
+          disabled={!canApply}
+          style={{ width: '100%', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 700 }}
+        >적용</button>
       </div>
     </div>
   )

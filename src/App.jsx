@@ -45,8 +45,10 @@ export default function App() {
   // 최신 값을 useCallback 클로저 없이 참조하기 위한 ref
   const activeColorRef = useRef(activeColor)
   const activeToolRef = useRef(activeTool)
+  const pickingSlotRef = useRef(pickingSlot)
   activeColorRef.current = activeColor
   activeToolRef.current = activeTool
+  pickingSlotRef.current = pickingSlot
 
   useEffect(() => {
     const handleClick = (e) => {
@@ -126,7 +128,7 @@ export default function App() {
         e.preventDefault(); redo()
       }
       if (e.key === 'Escape') {
-        if (pickingSlot !== null) { setPickingSlot(null); return }
+        if (pickingSlotRef.current !== null) { setPickingSlot(null); return }
         setSelection(null); return
       }
       if (document.activeElement?.tagName === 'INPUT') return
