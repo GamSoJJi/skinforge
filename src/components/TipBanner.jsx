@@ -25,8 +25,8 @@ export default function TipBanner() {
       setTimeout(() => {
         setIdx(i => (i + 1) % TIPS.length)
         setVisible(true)
-      }, 350)
-    }, 6000)
+      }, 500)
+    }, 30000)
     return () => clearInterval(id)
   }, [])
 
