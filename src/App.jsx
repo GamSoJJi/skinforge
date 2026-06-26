@@ -208,7 +208,8 @@ export default function App() {
 
   const isMac = /Mac|iPhone|iPod|iPad/.test(navigator.platform)
   const MOD = isMac ? '⌘' : 'Ctrl+'
-  const REDO_KEY = isMac ? `${MOD}⇧Z` : `${MOD}Y`
+  const SHIFT = isMac ? '⇧' : 'Shift+'
+  const REDO_KEY = isMac ? `${MOD}${SHIFT}Z` : `${MOD}Y`
 
   const [showGuide, setShowGuide] = useState(true)
   // ─── Color Replace Modal ───────────────────────────────
@@ -319,7 +320,7 @@ export default function App() {
                   onClick={() => { setColorReplaceOpen(true); setColorMenuOpen(false) }}
                 >
                   <span>색상 변경</span>
-                  <span className="mc-dropdown-shortcut">{MOD}⇧R</span>
+                  <span className="mc-dropdown-shortcut">{MOD}{SHIFT}R</span>
                 </button>
               </div>
             )}
