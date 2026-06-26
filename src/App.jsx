@@ -300,6 +300,28 @@ export default function App() {
     setSkinVersion(v => v + 1)
   }, [skinCanvas, pushUndo])
 
+  const sourceColor = shadeColors[0]
+  const [shadePreviewSel, setShadePreviewSel] = useState(null)
+
+  useEffect(() => {
+    if (!shadeRemapOpen || !/^#[0-9a-fA-F]{6}$/.test(sourceColor)) {
+      setShadePreviewSel(null)
+      return
+    }
+    const srcHsl = rgbToHsl(hexToRgb(sourceColor))
+    const ctx = skinCanvas.getContext('2d')
+    const img = ctx.getImageData(0, 0, 64, 64)
+    const d = img.data
+    const sel = new Set()
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i + 3] === 0) continue
+      const pHsl = rgbToHsl({ r: d[i], g: d[i + 1], b: d[i + 2] })
+      const diff = Math.abs(pHsl.h - srcHsl.h)
+      if (Math.min(diff, 360 - diff) <= shadeTolerance) sel.add(i / 4)
+    }
+    setShadePreviewSel(sel.size > 0 ? sel : null)
+  }, [shadeRemapOpen, sourceColor, shadeTolerance, skinVersion, skinCanvas])
+
   const handleShadeRemap = useCallback((sourceHex, targetHex, tolerance) => {
     const srcHsl = rgbToHsl(hexToRgb(sourceHex))
     const tgtHsl = rgbToHsl(hexToRgb(targetHex))
@@ -434,6 +456,7 @@ export default function App() {
             contiguous={contiguous}
             modalPickingSlot={pickingSlot}
             onModalColorPick={handleModalColorPick}
+            shadePreview={shadePreviewSel}
           />
           <TipBanner />
           <div className="guide-bar">

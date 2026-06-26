@@ -105,14 +105,14 @@ function buildSelectionPath(selection) {
   return path
 }
 
-function strokeMarchingAnts(ctx, path, dashOffset) {
+function strokeMarchingAnts(ctx, path, dashOffset, c1 = 'white', c2 = 'rgba(0,0,0,0.75)') {
   ctx.lineWidth = 1.5
   ctx.setLineDash([4, 4])
   ctx.lineDashOffset = -dashOffset
-  ctx.strokeStyle = 'white'
+  ctx.strokeStyle = c1
   ctx.stroke(path)
   ctx.lineDashOffset = -dashOffset + 4
-  ctx.strokeStyle = 'rgba(0,0,0,0.75)'
+  ctx.strokeStyle = c2
   ctx.stroke(path)
   ctx.setLineDash([])
 }
@@ -123,6 +123,7 @@ export default function PixelEditor({
   brushSize, brushShape, skinType, showGuide,
   selection, onSelectionChange, contiguous,
   modalPickingSlot, onModalColorPick,
+  shadePreview,
 }) {
   const canvasRef = useRef(null)
   const overlayRef = useRef(null)
@@ -288,20 +289,25 @@ export default function PixelEditor({
   }, [activeTool, brushSize, brushShape])
 
   // ── Selection overlay (marching ants) ────────────────────────────
-  const drawSelectionOverlay = useCallback((sel) => {
+  const drawSelectionOverlay = useCallback((sel, preview) => {
     const canvas = selectionCanvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     ctx.clearRect(0, 0, SIZE, SIZE)
-    if (!sel || sel.size === 0) return
-    const path = buildSelectionPath(sel)
-    strokeMarchingAnts(ctx, path, dashOffsetRef.current)
+    if (preview && preview.size > 0) {
+      strokeMarchingAnts(ctx, buildSelectionPath(preview), dashOffsetRef.current,
+        'rgba(255,210,0,0.95)', 'rgba(0,0,0,0.5)')
+    }
+    if (sel && sel.size > 0) {
+      strokeMarchingAnts(ctx, buildSelectionPath(sel), dashOffsetRef.current)
+    }
   }, [])
 
   // RAF marching ants animation
   useEffect(() => {
     const canvas = selectionCanvasRef.current
-    if (!selection || selection.size === 0) {
+    const hasContent = (selection && selection.size > 0) || (shadePreview && shadePreview.size > 0)
+    if (!hasContent) {
       if (canvas) canvas.getContext('2d').clearRect(0, 0, SIZE, SIZE)
       if (selAnimRef.current) cancelAnimationFrame(selAnimRef.current)
       return
@@ -310,7 +316,7 @@ export default function PixelEditor({
     const tick = () => {
       if (!running) return
       dashOffsetRef.current = (dashOffsetRef.current + 0.35) % 8
-      drawSelectionOverlay(selection)
+      drawSelectionOverlay(selection, shadePreview)
       selAnimRef.current = requestAnimationFrame(tick)
     }
     selAnimRef.current = requestAnimationFrame(tick)
@@ -318,7 +324,7 @@ export default function PixelEditor({
       running = false
       if (selAnimRef.current) cancelAnimationFrame(selAnimRef.current)
     }
-  }, [selection, drawSelectionOverlay])
+  }, [selection, shadePreview, drawSelectionOverlay])
 
   // ── Rect-select drag preview ──────────────────────────────────────
   const drawRectPreview = useCallback((sx, sy, ex, ey) => {
