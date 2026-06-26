@@ -67,6 +67,7 @@ export default function App() {
   const [skinType, setSkinType] = useState('normal')
   const [selection, setSelection] = useState(null)
   const [contiguous, setContiguous] = useState(true)
+  const [selMode, setSelMode] = useState('replace')
   const [uploadCount, setUploadCount] = useState(0)
   const [fileMenuOpen, setFileMenuOpen] = useState(false)
   const [mergeOpen, setMergeOpen] = useState(false)
@@ -478,6 +479,7 @@ export default function App() {
             selection={selection}
             onSelectionChange={setSelection}
             contiguous={contiguous}
+            selMode={selMode}
             modalPickingSlot={pickingSlot}
             onModalColorPick={handleModalColorPick}
             shadePreview={shadePreviewSel}
@@ -547,6 +549,8 @@ export default function App() {
             onBrushShapeChange={setBrushShape}
             contiguous={contiguous}
             onContiguousChange={setContiguous}
+            selMode={selMode}
+            onSelModeChange={setSelMode}
             hasSelection={selection !== null}
             onClearSelection={() => setSelection(null)}
           />

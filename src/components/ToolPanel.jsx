@@ -1,10 +1,17 @@
 import { useState, useCallback } from 'react'
 
+const SEL_MODES = [
+  { id: 'replace', label: '교체', icon: '⬚', desc: '매번 새로 선택', shortcut: null },
+  { id: 'union',   label: '합집합', icon: '⊕', desc: '기존 선택에 추가', shortcut: 'Shift' },
+  { id: 'diff',    label: '차집합', icon: '⊖', desc: '기존 선택에서 제거', shortcut: 'Alt' },
+]
+
 export default function ToolPanel({
   activeTool, onToolChange,
   brushSize, onBrushSizeChange,
   brushShape, onBrushShapeChange,
   contiguous, onContiguousChange,
+  selMode, onSelModeChange,
   hasSelection, onClearSelection,
 }) {
   const [tip, setTip] = useState(null)
@@ -28,6 +35,7 @@ export default function ToolPanel({
 
   const showBrush = activeTool === 'pen' || activeTool === 'eraser'
   const showWandOptions = activeTool === 'magic-wand'
+  const showSelMode = activeTool === 'rect-select' || activeTool === 'magic-wand'
 
   const handleSizeKeyDown = (e) => {
     if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
@@ -127,6 +135,28 @@ export default function ToolPanel({
             />
             <span>근접</span>
           </label>
+        </div>
+      )}
+
+      {showSelMode && (
+        <div className="sel-mode-settings">
+          <div className="panel-label">Selection</div>
+          <div className="sel-mode-btns">
+            {SEL_MODES.map((m) => (
+              <button
+                key={m.id}
+                className={`mc-btn sel-mode-btn ${selMode === m.id ? 'active' : ''}`}
+                onClick={() => onSelModeChange(m.id)}
+                onMouseEnter={(e) => showTip(e,
+                  m.shortcut ? `${m.label} — ${m.desc} : ${m.shortcut}` : `${m.label} — ${m.desc}`
+                )}
+                onMouseLeave={hideTip}
+              >
+                <span className="sel-mode-icon">{m.icon}</span>
+                <span className="sel-mode-label">{m.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

@@ -437,6 +437,40 @@ body.resizing-viewer { cursor: col-resize !important; user-select: none; }
 }
 .wand-option input[type="checkbox"] { accent-color: #555577; cursor: pointer; }
 
+.sel-mode-settings { margin-bottom: 6px; }
+
+.sel-mode-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sel-mode-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 7px;
+  font-size: 0.67rem;
+  justify-content: flex-start;
+}
+
+.sel-mode-btn.active {
+  background: var(--mc-border-light);
+  color: var(--mc-text);
+}
+
+.sel-mode-icon {
+  font-size: 0.8rem;
+  line-height: 1;
+  width: 14px;
+  text-align: center;
+}
+
+.sel-mode-label {
+  font-size: 0.67rem;
+}
+
 .selection-info { margin-bottom: 4px; }
 .sel-clear-btn {
   width: 100%;

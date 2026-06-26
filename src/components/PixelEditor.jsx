@@ -132,7 +132,7 @@ export default function PixelEditor({
   skinCanvas, skinVersion, onPixelChange, onBeforeEdit,
   activeTool, activeColor, onColorPicked,
   brushSize, brushShape, skinType, showGuide,
-  selection, onSelectionChange, contiguous,
+  selection, onSelectionChange, contiguous, selMode,
   modalPickingSlot, onModalColorPick,
   shadePreview,
 }) {
@@ -150,7 +150,9 @@ export default function PixelEditor({
   const isPanning = useRef(false)
   const panStart = useRef({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 })
   const rectStartRef = useRef(null)
-  const selModeRef = useRef('replace')
+  const selModeRef = useRef('replace')   // active mode for current gesture
+  const stickyModeRef = useRef(selMode)  // tracks prop for keyboard override logic
+  stickyModeRef.current = selMode
   const selectionRef = useRef(selection)
   selectionRef.current = selection
   const dashOffsetRef = useRef(0)
@@ -434,7 +436,8 @@ export default function PixelEditor({
     }
 
     if (activeTool === 'rect-select') {
-      selModeRef.current = e.shiftKey ? 'union' : e.altKey ? 'diff' : 'replace'
+      const base = stickyModeRef.current
+      selModeRef.current = e.shiftKey ? 'union' : e.altKey ? 'diff' : base
       if (selAnimRef.current) cancelAnimationFrame(selAnimRef.current)
       rectStartRef.current = { x: px, y: py }
       drawRectPreview(px, py, px, py)
@@ -442,7 +445,8 @@ export default function PixelEditor({
     }
 
     if (activeTool === 'magic-wand') {
-      const mode = e.shiftKey ? 'union' : e.altKey ? 'diff' : 'replace'
+      const base = stickyModeRef.current
+      const mode = e.shiftKey ? 'union' : e.altKey ? 'diff' : base
       const ctx = skinCanvas.getContext('2d')
       const imageData = ctx.getImageData(0, 0, 64, 64)
       const newSel = magicWandSelect(imageData, px, py, contiguous)
