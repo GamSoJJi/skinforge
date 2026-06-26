@@ -95,7 +95,7 @@ export default function ToolPanel({
                 className={`mc-btn shape-btn ${brushShape === 'square' ? 'active' : ''}`}
                 onClick={() => onBrushShapeChange('square')}
                 title="Square"
-              >▪</button>
+              >■</button>
               <button
                 className={`mc-btn shape-btn ${brushShape === 'circle' ? 'active' : ''}`}
                 onClick={() => onBrushShapeChange('circle')}
