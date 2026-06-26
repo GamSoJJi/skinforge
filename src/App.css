@@ -135,11 +135,24 @@ body { margin: 0; background: var(--mc-dark); font-family: 'Segoe UI', system-ui
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   padding: 5px 12px;
   background: rgba(30, 30, 30, 0.88);
   border-top: 2px solid var(--mc-border-dark);
   backdrop-filter: blur(4px);
+}
+
+.guide-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.guide-divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
 }
 
 .guide-bar-sep {

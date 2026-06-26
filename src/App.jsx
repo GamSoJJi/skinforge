@@ -252,44 +252,51 @@ export default function App() {
             contiguous={contiguous}
           />
           <div className="guide-bar">
-            <span className="guide-bar-label">가이드</span>
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={showGuide}
-                onChange={(e) => setShowGuide(e.target.checked)}
-              />
-              <span className="toggle-track">
-                <span className="toggle-thumb" />
-              </span>
-            </label>
-            <span className={`guide-type-label ${skinType === 'normal' ? 'active' : ''}`}>노말</span>
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={skinType === 'slim'}
-                onChange={(e) => setSkinType(e.target.checked ? 'slim' : 'normal')}
-              />
-              <span className="toggle-track">
-                <span className="toggle-thumb" />
-              </span>
-            </label>
-            <span className={`guide-type-label ${skinType === 'slim' ? 'active' : ''}`}>슬림</span>
+            <div className="guide-group">
+              <span className="guide-bar-label">가이드</span>
+              <label className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={showGuide}
+                  onChange={(e) => setShowGuide(e.target.checked)}
+                />
+                <span className="toggle-track">
+                  <span className="toggle-thumb" />
+                </span>
+              </label>
+            </div>
+            <div className="guide-divider" />
+            <div className="guide-group">
+              <span className={`guide-type-label ${skinType === 'normal' ? 'active' : ''}`}>노말</span>
+              <label className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={skinType === 'slim'}
+                  onChange={(e) => setSkinType(e.target.checked ? 'slim' : 'normal')}
+                />
+                <span className="toggle-track">
+                  <span className="toggle-thumb" />
+                </span>
+              </label>
+              <span className={`guide-type-label ${skinType === 'slim' ? 'active' : ''}`}>슬림</span>
+            </div>
             <div className="guide-bar-sep" />
-            <button
-              className="mc-btn guide-bar-btn"
-              onClick={undo}
-              disabled={!canUndo}
-              onMouseEnter={(e) => showGuideTip(e, `뒤로가기 : ${MOD}Z`)}
-              onMouseLeave={hideGuideTip}
-            >↩</button>
-            <button
-              className="mc-btn guide-bar-btn"
-              onClick={redo}
-              disabled={!canRedo}
-              onMouseEnter={(e) => showGuideTip(e, `앞으로가기 : ${REDO_KEY}`)}
-              onMouseLeave={hideGuideTip}
-            >↪</button>
+            <div className="guide-group">
+              <button
+                className="mc-btn guide-bar-btn"
+                onClick={undo}
+                disabled={!canUndo}
+                onMouseEnter={(e) => showGuideTip(e, `뒤로가기 : ${MOD}Z`)}
+                onMouseLeave={hideGuideTip}
+              >↩</button>
+              <button
+                className="mc-btn guide-bar-btn"
+                onClick={redo}
+                disabled={!canRedo}
+                onMouseEnter={(e) => showGuideTip(e, `앞으로가기 : ${REDO_KEY}`)}
+                onMouseLeave={hideGuideTip}
+              >↪</button>
+            </div>
             {guideTip && (
               <div className="js-tooltip guide-bar-tip" style={{ left: guideTip.left, bottom: guideTip.bottom }}>
                 {guideTip.text}
