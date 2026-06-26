@@ -300,63 +300,61 @@ export default function SkinMergeModal({ onClose }) {
     : ''
 
   return (
-    <div className="merge-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="merge-modal">
-        <div className="merge-header">
-          <span>스킨 합치기</span>
-          <button className="cr-close" onClick={onClose}>×</button>
+    <div className="merge-view">
+      <div className="merge-bar">
+        <button className="mc-btn merge-back-btn" onClick={onClose}>← 에디터로</button>
+        <span className="merge-bar-title">스킨 합치기</span>
+      </div>
+
+      <div className="merge-top">
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
+          <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.3px' }}>
+            결과 미리보기
+          </span>
+          <ResultCanvas merged={merged} />
+        </div>
+      </div>
+
+      <div className="merge-bottom">
+        <div className="merge-half">
+          <div className="merge-half-label" style={{ background: 'rgba(60,120,255,0.18)', borderColor: 'rgba(60,120,255,0.4)' }}>스킨 A</div>
+          <MiniCanvas
+            skinCanvas={skinA} selection={selA} onSelectionChange={updateSelA}
+            c1="rgba(80,150,255,0.95)" c2="rgba(0,0,0,0.6)"
+          />
+          <button className="mc-btn merge-upload-btn" onClick={() => inputARef.current?.click()}>
+            {skinA ? '변경' : '불러오기'}
+          </button>
+          <input ref={inputARef} type="file" accept=".png" style={{ display: 'none' }}
+            onChange={(e) => { const f=e.target.files?.[0]; if(f) { loadSkinFile(f, setSkinA); setSelA(null) } e.target.value='' }}
+          />
         </div>
 
-        <div className="merge-top">
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-            <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.3px' }}>
-              결과 미리보기
-            </span>
-            <ResultCanvas merged={merged} />
-          </div>
+        <div className="merge-divider" />
+
+        <div className="merge-half">
+          <div className="merge-half-label" style={{ background: 'rgba(255,150,40,0.18)', borderColor: 'rgba(255,150,40,0.4)' }}>스킨 B</div>
+          <MiniCanvas
+            skinCanvas={skinB} selection={selB} onSelectionChange={updateSelB}
+            c1="rgba(255,160,40,0.95)" c2="rgba(0,0,0,0.6)"
+          />
+          <button className="mc-btn merge-upload-btn" onClick={() => inputBRef.current?.click()}>
+            {skinB ? '변경' : '불러오기'}
+          </button>
+          <input ref={inputBRef} type="file" accept=".png" style={{ display: 'none' }}
+            onChange={(e) => { const f=e.target.files?.[0]; if(f) { loadSkinFile(f, setSkinB); setSelB(null) } e.target.value='' }}
+          />
         </div>
+      </div>
 
-        <div className="merge-bottom">
-          <div className="merge-half">
-            <div className="merge-half-label" style={{ background: 'rgba(60,120,255,0.18)', borderColor: 'rgba(60,120,255,0.4)' }}>스킨 A</div>
-            <MiniCanvas
-              skinCanvas={skinA} selection={selA} onSelectionChange={updateSelA}
-              c1="rgba(80,150,255,0.95)" c2="rgba(0,0,0,0.6)"
-            />
-            <button className="mc-btn merge-upload-btn" onClick={() => inputARef.current?.click()}>
-              {skinA ? '변경' : '불러오기'}
-            </button>
-            <input ref={inputARef} type="file" accept=".png" style={{ display: 'none' }}
-              onChange={(e) => { const f=e.target.files?.[0]; if(f) { loadSkinFile(f, setSkinA); setSelA(null) } e.target.value='' }}
-            />
-          </div>
-
-          <div className="merge-divider" />
-
-          <div className="merge-half">
-            <div className="merge-half-label" style={{ background: 'rgba(255,150,40,0.18)', borderColor: 'rgba(255,150,40,0.4)' }}>스킨 B</div>
-            <MiniCanvas
-              skinCanvas={skinB} selection={selB} onSelectionChange={updateSelB}
-              c1="rgba(255,160,40,0.95)" c2="rgba(0,0,0,0.6)"
-            />
-            <button className="mc-btn merge-upload-btn" onClick={() => inputBRef.current?.click()}>
-              {skinB ? '변경' : '불러오기'}
-            </button>
-            <input ref={inputBRef} type="file" accept=".png" style={{ display: 'none' }}
-              onChange={(e) => { const f=e.target.files?.[0]; if(f) { loadSkinFile(f, setSkinB); setSelB(null) } e.target.value='' }}
-            />
-          </div>
-        </div>
-
-        <div className="merge-footer">
-          <span className="merge-hint">{hint}</span>
-          <button
-            className="mc-btn"
-            onClick={handleDownload}
-            disabled={!merged}
-            style={{ fontWeight: 700, fontSize: '0.75rem' }}
-          >PNG 다운로드</button>
-        </div>
+      <div className="merge-footer">
+        <span className="merge-hint">{hint}</span>
+        <button
+          className="mc-btn"
+          onClick={handleDownload}
+          disabled={!merged}
+          style={{ fontWeight: 700, fontSize: '0.75rem' }}
+        >PNG 다운로드</button>
       </div>
     </div>
   )

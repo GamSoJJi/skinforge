@@ -453,6 +453,7 @@ export default function App() {
           onMouseDown={handleResizeStart}
         />
         <div className="canvas-area">
+          {mergeOpen ? <SkinMergeModal onClose={() => setMergeOpen(false)} /> : <>
           <PixelEditor
             skinCanvas={skinCanvas}
             skinVersion={skinVersion}
@@ -525,6 +526,7 @@ export default function App() {
               </div>
             )}
           </div>
+          </>}
         </div>
         <div className="side-panel">
           <ToolPanel
@@ -562,7 +564,6 @@ export default function App() {
         onClose={() => { setColorReplaceOpen(false); setPickingSlot(null); setPickingPanel(null) }}
       />
     )}
-    {mergeOpen && <SkinMergeModal onClose={() => setMergeOpen(false)} />}
     {shadeRemapOpen && (
       <ShadeRemapPanel
         colors={shadeColors}
