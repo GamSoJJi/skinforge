@@ -3,7 +3,7 @@ import SkinViewer3D from './components/SkinViewer3D'
 import PixelEditor from './components/PixelEditor'
 import ToolPanel from './components/ToolPanel'
 import ColorPanel from './components/ColorPanel'
-import ColorReplaceModal from './components/ColorReplaceModal'
+import ColorReplacePanel from './components/ColorReplacePanel'
 import './App.css'
 
 function hexToRgb(hex) {
@@ -126,7 +126,7 @@ export default function App() {
         e.preventDefault(); redo()
       }
       if (e.key === 'Escape') {
-        if (pickingSlot !== null) { setPickingSlot(null); document.body.classList.remove('picking-color'); return }
+        if (pickingSlot !== null) { setPickingSlot(null); return }
         setSelection(null); return
       }
       if (document.activeElement?.tagName === 'INPUT') return
@@ -210,14 +210,12 @@ export default function App() {
   const [pickingSlot, setPickingSlot] = useState(null)
 
   const handlePickStart = useCallback((slot) => {
-    setPickingSlot(slot)
-    document.body.classList.add('picking-color')
+    setPickingSlot(prev => prev === slot ? null : slot)
   }, [])
 
   const handleModalColorPick = useCallback((color) => {
     setReplaceColors(prev => { const n = [...prev]; n[pickingSlot] = color; return n })
     setPickingSlot(null)
-    document.body.classList.remove('picking-color')
   }, [pickingSlot])
 
   const handleReplaceColorChange = useCallback((slot, value) => {
@@ -424,13 +422,13 @@ export default function App() {
       </div>
     </div>
     {colorReplaceOpen && (
-      <ColorReplaceModal
+      <ColorReplacePanel
         colors={replaceColors}
         pickingSlot={pickingSlot}
-        onPickStart={handlePickStart}
+        onEyedropper={handlePickStart}
         onColorChange={handleReplaceColorChange}
         onApply={handleColorReplace}
-        onClose={() => { setColorReplaceOpen(false); setPickingSlot(null); document.body.classList.remove('picking-color') }}
+        onClose={() => { setColorReplaceOpen(false); setPickingSlot(null) }}
       />
     )}
     </>
