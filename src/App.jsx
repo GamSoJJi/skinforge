@@ -253,7 +253,8 @@ export default function App() {
   const [replaceColors, setReplaceColors] = useState(['', ''])
   const [shadeRemapOpen, setShadeRemapOpen] = useState(false)
   const [shadeColors, setShadeColors] = useState(['', ''])
-  const [shadeTolerance, setShadeTolerance] = useState(30)
+  const [shadeToleranceMinus, setShadeToleranceMinus] = useState(30)
+  const [shadeTolerancePlus, setShadeTolerancePlus] = useState(30)
   const [pickingSlot, setPickingSlot] = useState(null)
   const [pickingPanel, setPickingPanel] = useState(null)
   pickingSlotRef.current = pickingSlot
@@ -308,21 +309,23 @@ export default function App() {
       setShadePreviewSel(null)
       return
     }
-    const srcHsl = rgbToHsl(hexToRgb(sourceColor))
+    const srcH = rgbToHsl(hexToRgb(sourceColor)).h
     const ctx = skinCanvas.getContext('2d')
     const img = ctx.getImageData(0, 0, 64, 64)
     const d = img.data
     const sel = new Set()
     for (let i = 0; i < d.length; i += 4) {
       if (d[i + 3] === 0) continue
-      const pHsl = rgbToHsl({ r: d[i], g: d[i + 1], b: d[i + 2] })
-      const diff = Math.abs(pHsl.h - srcHsl.h)
-      if (Math.min(diff, 360 - diff) <= shadeTolerance) sel.add(i / 4)
+      const pH = rgbToHsl({ r: d[i], g: d[i + 1], b: d[i + 2] }).h
+      let delta = pH - srcH
+      if (delta > 180) delta -= 360
+      if (delta < -180) delta += 360
+      if (delta >= -shadeToleranceMinus && delta <= shadeTolerancePlus) sel.add(i / 4)
     }
     setShadePreviewSel(sel.size > 0 ? sel : null)
-  }, [shadeRemapOpen, sourceColor, shadeTolerance, skinVersion, skinCanvas])
+  }, [shadeRemapOpen, sourceColor, shadeToleranceMinus, shadeTolerancePlus, skinVersion, skinCanvas])
 
-  const handleShadeRemap = useCallback((sourceHex, targetHex, tolerance) => {
+  const handleShadeRemap = useCallback((sourceHex, targetHex, tolMinus, tolPlus) => {
     const srcHsl = rgbToHsl(hexToRgb(sourceHex))
     const tgtHsl = rgbToHsl(hexToRgb(targetHex))
     const lOffset = tgtHsl.l - srcHsl.l
@@ -333,8 +336,10 @@ export default function App() {
     for (let i = 0; i < d.length; i += 4) {
       if (d[i + 3] === 0) continue
       const pHsl = rgbToHsl({ r: d[i], g: d[i + 1], b: d[i + 2] })
-      const diff = Math.abs(pHsl.h - srcHsl.h)
-      if (Math.min(diff, 360 - diff) <= tolerance) {
+      let delta = pHsl.h - srcHsl.h
+      if (delta > 180) delta -= 360
+      if (delta < -180) delta += 360
+      if (delta >= -tolMinus && delta <= tolPlus) {
         const newL = Math.max(0, Math.min(1, pHsl.l + lOffset))
         const { r, g, b } = hslToRgb({ h: tgtHsl.h, s: tgtHsl.s, l: newL })
         d[i] = r; d[i + 1] = g; d[i + 2] = b
@@ -557,8 +562,10 @@ export default function App() {
         onEyedropper={(slot) => handlePickStart(slot, 'remap')}
         onColorChange={handleShadeColorChange}
         onApply={handleShadeRemap}
-        tolerance={shadeTolerance}
-        onToleranceChange={setShadeTolerance}
+        tolMinus={shadeToleranceMinus}
+        tolPlus={shadeTolerancePlus}
+        onTolMinusChange={setShadeToleranceMinus}
+        onTolPlusChange={setShadeTolerancePlus}
         onClose={() => { setShadeRemapOpen(false); setPickingSlot(null); setPickingPanel(null) }}
       />
     )}

@@ -657,10 +657,18 @@ body.picking-color { cursor: crosshair !important; }
   font-size: 0.63rem;
   color: rgba(255, 255, 255, 0.4);
   white-space: nowrap;
-  min-width: 26px;
+  min-width: 28px;
   text-align: right;
 }
-.shade-tolerance-label:first-child { text-align: left; }
+
+.shade-tolerance-side-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  min-width: 12px;
+  text-align: center;
+  flex-shrink: 0;
+}
 
 /* ─── Tip Banner ─── */
 .tip-banner {
