@@ -34,11 +34,13 @@ export default function App() {
   const [contiguous, setContiguous] = useState(true)
   const [uploadCount, setUploadCount] = useState(0)
   const [fileMenuOpen, setFileMenuOpen] = useState(false)
+  const [colorMenuOpen, setColorMenuOpen] = useState(false)
   const [historyPalette, setHistoryPalette] = useState(
     () => DEFAULT_PALETTE.map(c => ({ color: c, pinned: false }))
   )
 
   const fileMenuRef = useRef(null)
+  const colorMenuRef = useRef(null)
   const fileInputRef = useRef(null)
   // 최신 값을 useCallback 클로저 없이 참조하기 위한 ref
   const activeColorRef = useRef(activeColor)
@@ -48,13 +50,12 @@ export default function App() {
 
   useEffect(() => {
     const handleClick = (e) => {
-      if (fileMenuRef.current && !fileMenuRef.current.contains(e.target)) {
-        setFileMenuOpen(false)
-      }
+      if (fileMenuRef.current && !fileMenuRef.current.contains(e.target)) setFileMenuOpen(false)
+      if (colorMenuRef.current && !colorMenuRef.current.contains(e.target)) setColorMenuOpen(false)
     }
-    if (fileMenuOpen) document.addEventListener('mousedown', handleClick)
+    if (fileMenuOpen || colorMenuOpen) document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
-  }, [fileMenuOpen])
+  }, [fileMenuOpen, colorMenuOpen])
 
   const addToHistory = useCallback((newColor) => {
     if (!newColor || newColor.length !== 7) return
@@ -276,11 +277,19 @@ export default function App() {
         <img src="/favicon-32.png" alt="logo" className="mc-logo" />
         <h1 className="mc-title">SkinForge</h1>
         <nav className="mc-nav">
-          <div className="mc-menu-item">
+          <div className="mc-menu-item" ref={colorMenuRef}>
             <button
-              className={`mc-menu-btn ${colorReplaceOpen ? 'active' : ''}`}
-              onClick={() => setColorReplaceOpen(v => !v)}
+              className={`mc-menu-btn ${colorMenuOpen ? 'active' : ''}`}
+              onClick={() => setColorMenuOpen(v => !v)}
             >색상</button>
+            {colorMenuOpen && (
+              <div className="mc-dropdown">
+                <button
+                  className="mc-dropdown-item"
+                  onClick={() => { setColorReplaceOpen(true); setColorMenuOpen(false) }}
+                >색상 변경</button>
+              </div>
+            )}
           </div>
           <div className="mc-menu-item" ref={fileMenuRef}>
             <button
@@ -365,14 +374,6 @@ export default function App() {
               <span className={`guide-type-label ${skinType === 'slim' ? 'active' : ''}`}>슬림</span>
             </div>
             <div className="guide-bar-sep" />
-            <div className="guide-group">
-              <button
-                className={`mc-btn guide-bar-btn ${colorReplaceOpen ? 'active' : ''}`}
-                onClick={() => setColorReplaceOpen(v => !v)}
-                style={{ fontSize: '0.7rem', padding: '2px 10px', height: 22 }}
-              >색상 변경</button>
-            </div>
-            <div className="guide-divider" />
             <div className="guide-group">
               <button
                 className="mc-btn guide-bar-btn"
