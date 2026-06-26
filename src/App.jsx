@@ -45,10 +45,9 @@ export default function App() {
   // 최신 값을 useCallback 클로저 없이 참조하기 위한 ref
   const activeColorRef = useRef(activeColor)
   const activeToolRef = useRef(activeTool)
-  const pickingSlotRef = useRef(pickingSlot)
+  const pickingSlotRef = useRef(null)
   activeColorRef.current = activeColor
   activeToolRef.current = activeTool
-  pickingSlotRef.current = pickingSlot
 
   useEffect(() => {
     const handleClick = (e) => {
@@ -210,6 +209,7 @@ export default function App() {
   const [colorReplaceOpen, setColorReplaceOpen] = useState(false)
   const [replaceColors, setReplaceColors] = useState(['', ''])
   const [pickingSlot, setPickingSlot] = useState(null)
+  pickingSlotRef.current = pickingSlot
 
   const handlePickStart = useCallback((slot) => {
     setPickingSlot(prev => prev === slot ? null : slot)
