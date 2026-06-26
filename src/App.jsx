@@ -253,13 +253,16 @@ export default function App() {
           />
           <div className="guide-bar">
             <span className="guide-bar-label">가이드</span>
-            <button
-              className={`mc-btn guide-bar-btn ${showGuide ? 'active' : ''}`}
-              onClick={() => setShowGuide((v) => !v)}
-              onMouseEnter={(e) => showGuideTip(e, showGuide ? '가이드 숨기기' : '가이드 보기')}
-              onMouseLeave={hideGuideTip}
-              style={{ fontSize: '0.75rem', minWidth: 36 }}
-            >{showGuide ? '👁' : '👁'}</button>
+            <label className="toggle-switch">
+              <input
+                type="checkbox"
+                checked={showGuide}
+                onChange={(e) => setShowGuide(e.target.checked)}
+              />
+              <span className="toggle-track">
+                <span className="toggle-thumb" />
+              </span>
+            </label>
             <span className={`guide-type-label ${skinType === 'normal' ? 'active' : ''}`}>노말</span>
             <label className="toggle-switch">
               <input
