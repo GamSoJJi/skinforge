@@ -102,6 +102,7 @@ body { margin: 0; background: var(--mc-dark); font-family: 'Segoe UI', system-ui
   cursor: pointer;
   text-align: left;
   box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .mc-dropdown-shortcut {
