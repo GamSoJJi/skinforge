@@ -639,6 +639,29 @@ body.resizing-viewer { cursor: col-resize !important; user-select: none; }
 
 body.picking-color { cursor: crosshair !important; }
 
+/* ─── Shade Remap Slider ─── */
+.shade-tolerance-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0 2px;
+}
+
+.shade-slider {
+  flex: 1;
+  accent-color: #6677dd;
+  cursor: pointer;
+}
+
+.shade-tolerance-label {
+  font-size: 0.63rem;
+  color: rgba(255, 255, 255, 0.4);
+  white-space: nowrap;
+  min-width: 26px;
+  text-align: right;
+}
+.shade-tolerance-label:first-child { text-align: left; }
+
 /* ─── Tip Banner ─── */
 .tip-banner {
   position: absolute;

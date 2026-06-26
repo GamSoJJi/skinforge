@@ -4,6 +4,7 @@ import PixelEditor from './components/PixelEditor'
 import ToolPanel from './components/ToolPanel'
 import ColorPanel from './components/ColorPanel'
 import ColorReplacePanel from './components/ColorReplacePanel'
+import ShadeRemapPanel from './components/ShadeRemapPanel'
 import TipBanner from './components/TipBanner'
 import './App.css'
 
@@ -12,6 +13,38 @@ function hexToRgb(hex) {
     r: parseInt(hex.slice(1, 3), 16),
     g: parseInt(hex.slice(3, 5), 16),
     b: parseInt(hex.slice(5, 7), 16),
+  }
+}
+
+function rgbToHsl({ r, g, b }) {
+  r /= 255; g /= 255; b /= 255
+  const max = Math.max(r, g, b), min = Math.min(r, g, b)
+  const l = (max + min) / 2
+  if (max === min) return { h: 0, s: 0, l }
+  const d = max - min
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+  let h
+  if (max === r) h = (g - b) / d + (g < b ? 6 : 0)
+  else if (max === g) h = (b - r) / d + 2
+  else h = (r - g) / d + 4
+  return { h: h * 60, s, l }
+}
+
+function hslToRgb({ h, s, l }) {
+  const hue2rgb = (p, q, t) => {
+    if (t < 0) t += 1; if (t > 1) t -= 1
+    if (t < 1 / 6) return p + (q - p) * 6 * t
+    if (t < 1 / 2) return q
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6
+    return p
+  }
+  if (s === 0) { const v = Math.round(l * 255); return { r: v, g: v, b: v } }
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s
+  const p = 2 * l - q
+  return {
+    r: Math.round(hue2rgb(p, q, h / 360 + 1 / 3) * 255),
+    g: Math.round(hue2rgb(p, q, h / 360) * 255),
+    b: Math.round(hue2rgb(p, q, h / 360 - 1 / 3) * 255),
   }
 }
 
@@ -43,10 +76,10 @@ export default function App() {
   const fileMenuRef = useRef(null)
   const colorMenuRef = useRef(null)
   const fileInputRef = useRef(null)
-  // 최신 값을 useCallback 클로저 없이 참조하기 위한 ref
   const activeColorRef = useRef(activeColor)
   const activeToolRef = useRef(activeTool)
   const pickingSlotRef = useRef(null)
+  const pickingPanelRef = useRef(null)
   activeColorRef.current = activeColor
   activeToolRef.current = activeTool
 
@@ -130,11 +163,13 @@ export default function App() {
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'r') {
         e.preventDefault(); setColorReplaceOpen(v => !v)
       }
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'r') {
-        e.preventDefault(); setColorReplaceOpen(v => !v)
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'h') {
+        e.preventDefault(); setShadeRemapOpen(v => !v)
       }
       if (e.key === 'Escape') {
-        if (pickingSlotRef.current !== null) { setPickingSlot(null); return }
+        if (pickingSlotRef.current !== null) {
+          setPickingSlot(null); setPickingPanel(null); return
+        }
         setSelection(null); return
       }
       if (document.activeElement?.tagName === 'INPUT') return
@@ -213,23 +248,41 @@ export default function App() {
   const REDO_KEY = isMac ? `${MOD}${SHIFT}Z` : `${MOD}Y`
 
   const [showGuide, setShowGuide] = useState(true)
-  // ─── Color Replace Modal ───────────────────────────────
+  // ─── Color Replace / Shade Remap ───────────────────────
   const [colorReplaceOpen, setColorReplaceOpen] = useState(false)
   const [replaceColors, setReplaceColors] = useState(['', ''])
+  const [shadeRemapOpen, setShadeRemapOpen] = useState(false)
+  const [shadeColors, setShadeColors] = useState(['', ''])
+  const [shadeTolerance, setShadeTolerance] = useState(30)
   const [pickingSlot, setPickingSlot] = useState(null)
+  const [pickingPanel, setPickingPanel] = useState(null)
   pickingSlotRef.current = pickingSlot
+  pickingPanelRef.current = pickingPanel
 
-  const handlePickStart = useCallback((slot) => {
-    setPickingSlot(prev => prev === slot ? null : slot)
+  const handlePickStart = useCallback((slot, panel) => {
+    const same = pickingSlotRef.current === slot && pickingPanelRef.current === panel
+    setPickingSlot(same ? null : slot)
+    setPickingPanel(same ? null : panel)
   }, [])
 
   const handleModalColorPick = useCallback((color) => {
-    setReplaceColors(prev => { const n = [...prev]; n[pickingSlot] = color; return n })
+    const slot = pickingSlotRef.current
+    const panel = pickingPanelRef.current
+    if (panel === 'replace') {
+      setReplaceColors(prev => { const n = [...prev]; n[slot] = color; return n })
+    } else if (panel === 'remap') {
+      setShadeColors(prev => { const n = [...prev]; n[slot] = color; return n })
+    }
     setPickingSlot(null)
-  }, [pickingSlot])
+    setPickingPanel(null)
+  }, [])
 
   const handleReplaceColorChange = useCallback((slot, value) => {
     setReplaceColors(prev => { const n = [...prev]; n[slot] = value; return n })
+  }, [])
+
+  const handleShadeColorChange = useCallback((slot, value) => {
+    setShadeColors(prev => { const n = [...prev]; n[slot] = value; return n })
   }, [])
 
   const handleColorReplace = useCallback((from, to) => {
@@ -241,6 +294,26 @@ export default function App() {
     for (let i = 0; i < d.length; i += 4) {
       if (d[i] === f.r && d[i+1] === f.g && d[i+2] === f.b && d[i+3] > 0) {
         d[i] = t.r; d[i+1] = t.g; d[i+2] = t.b
+      }
+    }
+    ctx.putImageData(img, 0, 0)
+    setSkinVersion(v => v + 1)
+  }, [skinCanvas, pushUndo])
+
+  const handleShadeRemap = useCallback((sourceHex, targetHex, tolerance) => {
+    const srcHsl = rgbToHsl(hexToRgb(sourceHex))
+    const tgtHsl = rgbToHsl(hexToRgb(targetHex))
+    pushUndo()
+    const ctx = skinCanvas.getContext('2d')
+    const img = ctx.getImageData(0, 0, 64, 64)
+    const d = img.data
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i + 3] === 0) continue
+      const pHsl = rgbToHsl({ r: d[i], g: d[i + 1], b: d[i + 2] })
+      const diff = Math.abs(pHsl.h - srcHsl.h)
+      if (Math.min(diff, 360 - diff) <= tolerance) {
+        const { r, g, b } = hslToRgb({ h: tgtHsl.h, s: tgtHsl.s, l: pHsl.l })
+        d[i] = r; d[i + 1] = g; d[i + 2] = b
       }
     }
     ctx.putImageData(img, 0, 0)
@@ -318,10 +391,17 @@ export default function App() {
               <div className="mc-dropdown">
                 <button
                   className="mc-dropdown-item"
-                  onClick={() => { setColorReplaceOpen(true); setColorMenuOpen(false) }}
+                  onClick={() => { setColorReplaceOpen(true); setShadeRemapOpen(false); setColorMenuOpen(false) }}
                 >
                   <span>색상 변경</span>
                   <span className="mc-dropdown-shortcut">{MOD}{SHIFT}R</span>
+                </button>
+                <button
+                  className="mc-dropdown-item"
+                  onClick={() => { setShadeRemapOpen(true); setColorReplaceOpen(false); setColorMenuOpen(false) }}
+                >
+                  <span>색조 변경</span>
+                  <span className="mc-dropdown-shortcut">{MOD}{SHIFT}H</span>
                 </button>
               </div>
             )}
@@ -438,11 +518,23 @@ export default function App() {
     {colorReplaceOpen && (
       <ColorReplacePanel
         colors={replaceColors}
-        pickingSlot={pickingSlot}
-        onEyedropper={handlePickStart}
+        pickingSlot={pickingPanel === 'replace' ? pickingSlot : null}
+        onEyedropper={(slot) => handlePickStart(slot, 'replace')}
         onColorChange={handleReplaceColorChange}
         onApply={handleColorReplace}
-        onClose={() => { setColorReplaceOpen(false); setPickingSlot(null) }}
+        onClose={() => { setColorReplaceOpen(false); setPickingSlot(null); setPickingPanel(null) }}
+      />
+    )}
+    {shadeRemapOpen && (
+      <ShadeRemapPanel
+        colors={shadeColors}
+        pickingSlot={pickingPanel === 'remap' ? pickingSlot : null}
+        onEyedropper={(slot) => handlePickStart(slot, 'remap')}
+        onColorChange={handleShadeColorChange}
+        onApply={handleShadeRemap}
+        tolerance={shadeTolerance}
+        onToleranceChange={setShadeTolerance}
+        onClose={() => { setShadeRemapOpen(false); setPickingSlot(null); setPickingPanel(null) }}
       />
     )}
     </>
