@@ -146,11 +146,13 @@ export default function PixelEditor({
   const selectionCanvasRef = useRef(null)
   const cursorRef = useRef(null)
   const scrollRef = useRef(null)
+  const outerRef = useRef(null)
   const isDragging = useRef(false)
   const hasPainted = useRef(false)
   const zoomRef = useRef(1)
   const lastPixelPos = useRef([0, 0])
   const [zoom, setZoomState] = useState(1)
+  const [cursorSize, setCursorSize] = useState({ w: 800, h: 600 })
   const isPanning = useRef(false)
   const panStart = useRef({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 })
   const rectStartRef = useRef(null)
@@ -163,6 +165,18 @@ export default function PixelEditor({
   const selAnimRef = useRef(null)
 
   const setZoom = (v) => { zoomRef.current = v; setZoomState(v) }
+
+  // Track outer viewport size for the cursor overlay canvas
+  useEffect(() => {
+    const el = outerRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect
+      setCursorSize({ w: Math.ceil(width), h: Math.ceil(height) })
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   useEffect(() => {
     const scrollEl = scrollRef.current
@@ -253,13 +267,22 @@ export default function PixelEditor({
 
   const redrawCursor = useCallback((mx, my, color) => {
     const cursor = cursorRef.current
-    if (!cursor) return
+    const scrollEl = scrollRef.current
+    if (!cursor || !scrollEl) return
     const ctx = cursor.getContext('2d')
-    ctx.clearRect(0, 0, SIZE, SIZE)
+    ctx.clearRect(0, 0, cursor.width, cursor.height)
+
+    const z = zoomRef.current
+    const sz = SCALE * z  // one skin pixel in screen px
+
+    // Convert skin pixel top-left to screen coords (relative to cursor canvas = scroll viewport)
+    const toScreen = (skinX, skinY) => ({
+      x: PAD + skinX * sz - scrollEl.scrollLeft,
+      y: PAD + skinY * sz - scrollEl.scrollTop,
+    })
 
     if (activeTool === 'pen' || activeTool === 'eraser') {
       const half = Math.floor(brushSize / 2)
-      // 실제 칠해지는 픽셀 집합 계산 (paintBrush와 동일한 로직)
       const painted = new Set()
       for (let dy = -half; dy < brushSize - half; dy++) {
         for (let dx = -half; dx < brushSize - half; dx++) {
@@ -267,64 +290,58 @@ export default function PixelEditor({
           painted.add(`${dx},${dy}`)
         }
       }
-      // 픽셀 아웃라인 그리기
       const drawOutline = (strokeStyle, lineWidth) => {
         ctx.strokeStyle = strokeStyle; ctx.lineWidth = lineWidth
         ctx.beginPath()
         for (const key of painted) {
           const [dx, dy] = key.split(',').map(Number)
-          const px = (mx + dx) * SCALE, py = (my + dy) * SCALE
-          if (!painted.has(`${dx},${dy - 1}`)) { ctx.moveTo(px, py);          ctx.lineTo(px + SCALE, py) }
-          if (!painted.has(`${dx},${dy + 1}`)) { ctx.moveTo(px, py + SCALE);  ctx.lineTo(px + SCALE, py + SCALE) }
-          if (!painted.has(`${dx - 1},${dy}`)) { ctx.moveTo(px, py);          ctx.lineTo(px, py + SCALE) }
-          if (!painted.has(`${dx + 1},${dy}`)) { ctx.moveTo(px + SCALE, py);  ctx.lineTo(px + SCALE, py + SCALE) }
+          const { x: px, y: py } = toScreen(mx + dx, my + dy)
+          if (!painted.has(`${dx},${dy - 1}`)) { ctx.moveTo(px, py);       ctx.lineTo(px + sz, py) }
+          if (!painted.has(`${dx},${dy + 1}`)) { ctx.moveTo(px, py + sz);  ctx.lineTo(px + sz, py + sz) }
+          if (!painted.has(`${dx - 1},${dy}`)) { ctx.moveTo(px, py);       ctx.lineTo(px, py + sz) }
+          if (!painted.has(`${dx + 1},${dy}`)) { ctx.moveTo(px + sz, py);  ctx.lineTo(px + sz, py + sz) }
         }
         ctx.stroke()
       }
-      drawOutline('rgba(0,0,0,0.65)', SCALE * 0.3)
-      drawOutline('rgba(255,255,255,0.95)', SCALE * 0.15)
+      drawOutline('rgba(0,0,0,0.65)', 1.5)
+      drawOutline('rgba(255,255,255,0.95)', 0.8)
     } else if (activeTool === 'eyedropper') {
-      const cx = mx * SCALE + SCALE / 2
-      const cy = my * SCALE + SCALE / 2
-      const len = SCALE * 1.8
+      const { x: cx, y: cy } = toScreen(mx + 0.5, my + 0.5)
+      const len = 12
       const drawLine = (style, lw, x1, y1, x2, y2) => {
         ctx.strokeStyle = style; ctx.lineWidth = lw
         ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke()
       }
-      const lw1 = SCALE * 0.3, lw2 = SCALE * 0.15
-      drawLine('rgba(0,0,0,0.7)', lw1, cx - len, cy, cx + len, cy)
-      drawLine('rgba(0,0,0,0.7)', lw1, cx, cy - len, cx, cy + len)
-      drawLine('rgba(255,255,255,0.95)', lw2, cx - len, cy, cx + len, cy)
-      drawLine('rgba(255,255,255,0.95)', lw2, cx, cy - len, cx, cy + len)
-      ctx.beginPath(); ctx.arc(cx, cy, SCALE * 0.35, 0, Math.PI * 2)
+      drawLine('rgba(0,0,0,0.7)', 1.5, cx - len, cy, cx + len, cy)
+      drawLine('rgba(0,0,0,0.7)', 1.5, cx, cy - len, cx, cy + len)
+      drawLine('rgba(255,255,255,0.95)', 0.8, cx - len, cy, cx + len, cy)
+      drawLine('rgba(255,255,255,0.95)', 0.8, cx, cy - len, cx, cy + len)
+      ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2)
       ctx.fillStyle = color || '#ffffff'; ctx.fill()
-      ctx.strokeStyle = '#000'; ctx.lineWidth = lw2; ctx.stroke()
+      ctx.strokeStyle = '#000'; ctx.lineWidth = 0.8; ctx.stroke()
       if (color) {
-        const off = SCALE * 0.75
         ctx.fillStyle = color
-        ctx.fillRect(cx + off, cy + off, SCALE, SCALE)
-        ctx.strokeStyle = '#000'; ctx.lineWidth = lw2
-        ctx.strokeRect(cx + off, cy + off, SCALE, SCALE)
+        ctx.fillRect(cx + 8, cy + 8, 14, 14)
+        ctx.strokeStyle = '#000'; ctx.lineWidth = 0.8
+        ctx.strokeRect(cx + 8, cy + 8, 14, 14)
       }
     } else if (activeTool === 'fill') {
-      const cx = mx * SCALE + SCALE / 2
-      const cy = my * SCALE + SCALE / 2
-      const len = SCALE * 1.8
+      const { x: cx, y: cy } = toScreen(mx + 0.5, my + 0.5)
+      const len = 12
       const drawLine = (style, lw, x1, y1, x2, y2) => {
         ctx.strokeStyle = style; ctx.lineWidth = lw
         ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke()
       }
-      const lw1 = SCALE * 0.3, lw2 = SCALE * 0.15
-      drawLine('rgba(0,0,0,0.7)', lw1, cx - len, cy, cx + len, cy)
-      drawLine('rgba(0,0,0,0.7)', lw1, cx, cy - len, cx, cy + len)
-      drawLine('rgba(255,255,255,0.95)', lw2, cx - len, cy, cx + len, cy)
-      drawLine('rgba(255,255,255,0.95)', lw2, cx, cy - len, cx, cy + len)
-      ctx.font = `${SCALE * 1.4}px serif`
+      drawLine('rgba(0,0,0,0.7)', 1.5, cx - len, cy, cx + len, cy)
+      drawLine('rgba(0,0,0,0.7)', 1.5, cx, cy - len, cx, cy + len)
+      drawLine('rgba(255,255,255,0.95)', 0.8, cx - len, cy, cx + len, cy)
+      drawLine('rgba(255,255,255,0.95)', 0.8, cx, cy - len, cx, cy + len)
+      ctx.font = '14px serif'
       ctx.textBaseline = 'top'; ctx.textAlign = 'left'
-      ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = SCALE * 0.35
-      ctx.shadowOffsetX = lw2; ctx.shadowOffsetY = lw2
+      ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 3
+      ctx.shadowOffsetX = 0.8; ctx.shadowOffsetY = 0.8
       ctx.fillStyle = '#ffffff'
-      ctx.fillText('🪣', cx + SCALE * 0.6, cy + SCALE * 0.6)
+      ctx.fillText('🪣', cx + 4, cy + 4)
       ctx.shadowColor = 'transparent'
     }
     // rect-select and magic-wand use CSS cursor (no canvas drawing)
@@ -399,9 +416,13 @@ export default function PixelEditor({
   }, [redrawCursor])
 
   const getPixelCoords = useCallback((e) => {
+    const scrollEl = scrollRef.current
     const rect = cursorRef.current.getBoundingClientRect()
-    const px = Math.floor(((e.clientX - rect.left) / rect.width) * 64)
-    const py = Math.floor(((e.clientY - rect.top) / rect.height) * 64)
+    // cursor canvas covers scroll viewport; add scrollLeft/Top to get scroll-content coords
+    const scrollX = (e.clientX - rect.left) + scrollEl.scrollLeft
+    const scrollY = (e.clientY - rect.top)  + scrollEl.scrollTop
+    const px = Math.floor((scrollX - PAD) / (SCALE * zoomRef.current))
+    const py = Math.floor((scrollY - PAD) / (SCALE * zoomRef.current))
     return [Math.max(0, Math.min(63, px)), Math.max(0, Math.min(63, py))]
   }, [])
 
@@ -519,7 +540,8 @@ export default function PixelEditor({
     if (activeTool === 'rect-select') return  // keep preview while dragging
     if (isDragging.current && hasPainted.current) { onPixelChange(); redrawSkin() }
     isDragging.current = false
-    cursorRef.current?.getContext('2d').clearRect(0, 0, SIZE, SIZE)
+    const c = cursorRef.current
+    if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height)
   }, [activeTool, onPixelChange, redrawSkin])
 
   const handleWheel = useCallback((e) => {
@@ -542,47 +564,48 @@ export default function PixelEditor({
   }, [])
 
   useEffect(() => {
-    const el = scrollRef.current
+    const el = outerRef.current
     if (!el) return
     el.addEventListener('wheel', handleWheel, { passive: false })
     return () => el.removeEventListener('wheel', handleWheel)
   }, [handleWheel])
 
   useEffect(() => {
-    const el = scrollRef.current
-    if (!el) return
+    const outer = outerRef.current
+    const scrollEl = scrollRef.current
+    if (!outer || !scrollEl) return
     const onMouseDown = (e) => {
       if (e.button !== 1) return
       e.preventDefault()
       isPanning.current = true
-      panStart.current = { x: e.clientX, y: e.clientY, scrollLeft: el.scrollLeft, scrollTop: el.scrollTop }
-      el.style.cursor = 'grabbing'
+      panStart.current = { x: e.clientX, y: e.clientY, scrollLeft: scrollEl.scrollLeft, scrollTop: scrollEl.scrollTop }
+      if (cursorRef.current) cursorRef.current.style.cursor = 'grabbing'
     }
     const onMouseMove = (e) => {
       if (!isPanning.current) return
       e.preventDefault()
-      el.scrollLeft = panStart.current.scrollLeft - (e.clientX - panStart.current.x)
-      el.scrollTop = panStart.current.scrollTop - (e.clientY - panStart.current.y)
+      scrollEl.scrollLeft = panStart.current.scrollLeft - (e.clientX - panStart.current.x)
+      scrollEl.scrollTop  = panStart.current.scrollTop  - (e.clientY - panStart.current.y)
     }
     const onMouseUp = (e) => {
       if (e.button !== 1 || !isPanning.current) return
       isPanning.current = false
-      el.style.cursor = ''
+      if (cursorRef.current) cursorRef.current.style.cursor = ''
     }
     const onMouseLeave = () => {
       if (!isPanning.current) return
       isPanning.current = false
-      el.style.cursor = ''
+      if (cursorRef.current) cursorRef.current.style.cursor = ''
     }
-    el.addEventListener('mousedown', onMouseDown)
+    outer.addEventListener('mousedown', onMouseDown)
     window.addEventListener('mousemove', onMouseMove)
     window.addEventListener('mouseup', onMouseUp)
-    el.addEventListener('mouseleave', onMouseLeave)
+    outer.addEventListener('mouseleave', onMouseLeave)
     return () => {
-      el.removeEventListener('mousedown', onMouseDown)
+      outer.removeEventListener('mousedown', onMouseDown)
       window.removeEventListener('mousemove', onMouseMove)
       window.removeEventListener('mouseup', onMouseUp)
-      el.removeEventListener('mouseleave', onMouseLeave)
+      outer.removeEventListener('mouseleave', onMouseLeave)
     }
   }, [])
 
@@ -592,34 +615,43 @@ export default function PixelEditor({
     activeTool === 'magic-wand'  ? 'cell' : 'none'
 
   return (
-    <div className="pixel-editor-scroll" ref={scrollRef}>
-      {/* Outer box adds PAD on each side so you can pan beyond the canvas edge */}
-      <div style={{ width: SIZE * zoom + 2 * PAD, height: SIZE * zoom + 2 * PAD, position: 'relative', flexShrink: 0 }}>
-        <div style={{ position: 'absolute', top: PAD, left: PAD, width: SIZE, height: SIZE, transformOrigin: '0 0', transform: `scale(${zoom})` }}>
-          <div className="pixel-editor-wrap" style={{ width: SIZE, height: SIZE, position: 'relative' }}>
-            {/* Layer 0: guide silhouette fills (below skin) */}
-            <canvas ref={guideCanvasRef} width={SIZE} height={SIZE}
-              style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', imageRendering: 'pixelated' }} />
-            {/* Layer 1: skin pixels */}
-            <canvas ref={canvasRef} width={SIZE} height={SIZE}
-              style={{ position: 'absolute', top: 0, left: 0, imageRendering: 'pixelated' }} />
-            {/* Layer 2: grid + borders + labels — auto for smooth anti-aliased lines */}
-            <canvas ref={overlayRef} width={SIZE} height={SIZE}
-              style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', imageRendering: 'auto' }} />
-            {/* Layer 3: selection marching ants */}
-            <canvas ref={selectionCanvasRef} width={SIZE} height={SIZE}
-              style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', imageRendering: 'pixelated' }} />
-            {/* Layer 4: cursor preview + mouse events */}
-            <canvas ref={cursorRef} width={SIZE} height={SIZE}
-              style={{ position: 'absolute', top: 0, left: 0, cursor: cursorStyle, imageRendering: 'pixelated' }}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseLeave}
-            />
+    // outerRef: flex container that defines the visible viewport; cursor canvas is positioned here
+    <div ref={outerRef} style={{ flex: 1, position: 'relative', overflow: 'hidden', minWidth: 0, minHeight: 0 }}>
+      {/* Scroll container: absolute-fills the outer wrapper */}
+      <div className="pixel-editor-scroll" ref={scrollRef} style={{ position: 'absolute', inset: 0, overflow: 'auto' }}>
+        {/* PAD box: adds scrollable space outside the canvas on each side */}
+        <div style={{ width: SIZE * zoom + 2 * PAD, height: SIZE * zoom + 2 * PAD, position: 'relative', flexShrink: 0 }}>
+          <div style={{ position: 'absolute', top: PAD, left: PAD, width: SIZE, height: SIZE, transformOrigin: '0 0', transform: `scale(${zoom})` }}>
+            <div className="pixel-editor-wrap" style={{ width: SIZE, height: SIZE, position: 'relative' }}>
+              {/* Layer 0: guide silhouette fills */}
+              <canvas ref={guideCanvasRef} width={SIZE} height={SIZE}
+                style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', imageRendering: 'pixelated' }} />
+              {/* Layer 1: skin pixels */}
+              <canvas ref={canvasRef} width={SIZE} height={SIZE}
+                style={{ position: 'absolute', top: 0, left: 0, imageRendering: 'pixelated' }} />
+              {/* Layer 2: grid + borders + labels — auto for smooth anti-aliased lines */}
+              <canvas ref={overlayRef} width={SIZE} height={SIZE}
+                style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', imageRendering: 'auto' }} />
+              {/* Layer 3: selection marching ants — stays in scale group so selection scales with zoom */}
+              <canvas ref={selectionCanvasRef} width={SIZE} height={SIZE}
+                style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', imageRendering: 'pixelated' }} />
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Cursor overlay: outside scale transform, covers the viewport at 1:1 screen pixels.
+          Mouse events are received here so getPixelCoords can use scroll+zoom math. */}
+      <canvas ref={cursorRef}
+        width={cursorSize.w} height={cursorSize.h}
+        style={{ position: 'absolute', top: 0, left: 0,
+                 width: cursorSize.w, height: cursorSize.h,
+                 cursor: cursorStyle }}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+      />
     </div>
   )
 }

@@ -261,8 +261,6 @@ body.resizing-viewer { cursor: col-resize !important; user-select: none; }
 }
 
 .pixel-editor-scroll {
-  flex: 1;
-  overflow: auto;
   background: #4a4a4a;
 }
 
