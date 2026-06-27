@@ -68,6 +68,8 @@ export default function App() {
   const [selection, setSelection] = useState(null)
   const [contiguous, setContiguous] = useState(true)
   const [selMode, setSelMode] = useState('replace')
+  const [shiftHeld, setShiftHeld] = useState(false)
+  const [altHeld, setAltHeld] = useState(false)
   const [uploadCount, setUploadCount] = useState(0)
   const [fileMenuOpen, setFileMenuOpen] = useState(false)
   const [mergeOpen, setMergeOpen] = useState(false)
@@ -157,16 +159,18 @@ export default function App() {
 
   useEffect(() => {
     const onKeyDown = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') setShiftHeld(true)
+      if (e.code === 'AltLeft'   || e.code === 'AltRight')   setAltHeld(true)
+      if ((e.metaKey || e.ctrlKey) && e.code === 'KeyZ' && !e.shiftKey) {
         e.preventDefault(); undo()
       }
-      if ((e.metaKey || e.ctrlKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+      if ((e.metaKey || e.ctrlKey) && (e.code === 'KeyY' || (e.code === 'KeyZ' && e.shiftKey))) {
         e.preventDefault(); redo()
       }
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'r') {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.code === 'KeyR') {
         e.preventDefault(); setColorReplaceOpen(v => !v)
       }
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'h') {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.code === 'KeyH') {
         e.preventDefault(); setShadeRemapOpen(v => !v)
       }
       if (e.key === 'Escape') {
@@ -176,15 +180,27 @@ export default function App() {
         setSelection(null); return
       }
       if (document.activeElement?.tagName === 'INPUT') return
-      if (e.key === 'b') setActiveTool('pen')
-      if (e.key === 'e') setActiveTool('eraser')
-      if (e.key === 'i') setActiveTool('eyedropper')
-      if (e.key === 'm') setActiveTool('rect-select')
-      if (e.key === '[') setBrushSize((s) => Math.max(1, s - 1))
-      if (e.key === ']') setBrushSize((s) => Math.min(16, s + 1))
+      if (e.code === 'KeyB') setActiveTool('pen')
+      if (e.code === 'KeyE') setActiveTool('eraser')
+      if (e.code === 'KeyG') setActiveTool('fill')
+      if (e.code === 'KeyI') setActiveTool('eyedropper')
+      if (e.code === 'KeyM') setActiveTool('rect-select')
+      if (e.code === 'BracketLeft')  setBrushSize((s) => Math.max(1, s - 1))
+      if (e.code === 'BracketRight') setBrushSize((s) => Math.min(16, s + 1))
     }
+    const onKeyUp = (e) => {
+      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') setShiftHeld(false)
+      if (e.code === 'AltLeft'   || e.code === 'AltRight')   setAltHeld(false)
+    }
+    const onBlur = () => { setShiftHeld(false); setAltHeld(false) }
     window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
+    window.addEventListener('keyup', onKeyUp)
+    window.addEventListener('blur', onBlur)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('keyup', onKeyUp)
+      window.removeEventListener('blur', onBlur)
+    }
   }, [undo, redo])
 
   useEffect(() => {
@@ -554,6 +570,7 @@ export default function App() {
             onContiguousChange={setContiguous}
             selMode={selMode}
             onSelModeChange={setSelMode}
+            effectiveSelMode={shiftHeld ? 'union' : altHeld ? 'diff' : selMode}
             hasSelection={selection !== null}
             onClearSelection={() => setSelection(null)}
           />

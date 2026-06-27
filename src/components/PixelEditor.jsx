@@ -1,8 +1,9 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { getSkinLayout } from '../utils/skinLayout'
 
-const SCALE = 8
-const SIZE = 64 * SCALE
+const SCALE = 16
+const SIZE = 64 * SCALE   // 1024 — 2× per-axis resolution for crisp rendering
+const PAD  = 400          // scrollable space outside the canvas on each side
 
 function hexToRgba(hex) {
   const r = parseInt(hex.slice(1, 3), 16)
@@ -116,13 +117,16 @@ function applySelectionMode(newSel, mode, currentSel) {
   return newSel
 }
 
+const ANT_LW   = SCALE * 0.19   // ~1.5 visual-px equivalent
+const ANT_DASH = SCALE * 0.5    // ~4 px dash segment
+
 function strokeMarchingAnts(ctx, path, dashOffset, c1 = 'white', c2 = 'rgba(0,0,0,0.75)') {
-  ctx.lineWidth = 1.5
-  ctx.setLineDash([4, 4])
+  ctx.lineWidth = ANT_LW
+  ctx.setLineDash([ANT_DASH, ANT_DASH])
   ctx.lineDashOffset = -dashOffset
   ctx.strokeStyle = c1
   ctx.stroke(path)
-  ctx.lineDashOffset = -dashOffset + 4
+  ctx.lineDashOffset = -dashOffset + ANT_DASH
   ctx.strokeStyle = c2
   ctx.stroke(path)
   ctx.setLineDash([])
@@ -167,7 +171,14 @@ export default function PixelEditor({
       (scrollEl.clientWidth - 40) / SIZE,
       (scrollEl.clientHeight - 40) / SIZE
     )
-    setZoom(Math.max(0.5, Math.min(12, fitZoom)))
+    const clamped = Math.max(0.25, Math.min(32, fitZoom))
+    setZoom(clamped)
+    // Center the canvas inside the padded scroll area after DOM updates
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const total = SIZE * clamped + 2 * PAD
+      scrollEl.scrollLeft = Math.max(0, (total - scrollEl.clientWidth)  / 2)
+      scrollEl.scrollTop  = Math.max(0, (total - scrollEl.clientHeight) / 2)
+    }))
   }, [])
 
   // 스킨 아래 레이어: 실루엣 fills만 (색감에 영향 없도록 skin 픽셀 아래)
@@ -193,14 +204,17 @@ export default function PixelEditor({
     const ctx = overlay.getContext('2d')
     ctx.clearRect(0, 0, SIZE, SIZE)
 
-    // Grid lines (always visible)
-    ctx.lineWidth = 0.5
+    // Grid lines (always visible) — lineWidth scales with SCALE so visual width stays consistent
+    const thin = SCALE / 8       // 1px visual equivalent
+    const minor = thin * 0.5
     for (let x = 0; x <= 64; x++) {
-      ctx.strokeStyle = x % 8 === 0 ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)'
+      ctx.lineWidth = x % 8 === 0 ? thin : minor
+      ctx.strokeStyle = x % 8 === 0 ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.12)'
       ctx.beginPath(); ctx.moveTo(x * SCALE, 0); ctx.lineTo(x * SCALE, SIZE); ctx.stroke()
     }
     for (let y = 0; y <= 64; y++) {
-      ctx.strokeStyle = y % 8 === 0 ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)'
+      ctx.lineWidth = y % 8 === 0 ? thin : minor
+      ctx.strokeStyle = y % 8 === 0 ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.12)'
       ctx.beginPath(); ctx.moveTo(0, y * SCALE); ctx.lineTo(SIZE, y * SCALE); ctx.stroke()
     }
 
@@ -209,22 +223,22 @@ export default function PixelEditor({
     const { parts, labels } = getSkinLayout(skinType === 'slim')
 
     // Part borders
-    ctx.lineWidth = 1.5
+    ctx.lineWidth = thin * 1.5
     for (const part of parts) {
       if (part.unused) continue
       ctx.strokeStyle = part.color.replace(/[\d.]+\)$/, '0.6)')
-      ctx.strokeRect(part.x * SCALE + 0.5, part.y * SCALE + 0.5, part.w * SCALE - 1, part.h * SCALE - 1)
+      ctx.strokeRect(part.x * SCALE + thin, part.y * SCALE + thin, part.w * SCALE - thin * 2, part.h * SCALE - thin * 2)
     }
 
     // Labels
     ctx.textBaseline = 'top'
     for (const label of labels) {
-      const fs = 9
+      const fs = 9 * (SCALE / 8)
       ctx.font = `bold ${fs}px sans-serif`
       ctx.fillStyle = 'rgba(0,0,0,0.6)'
-      ctx.fillText(label.name, label.x * SCALE + 3, label.y * SCALE + 3)
+      ctx.fillText(label.name, label.x * SCALE + thin * 3, label.y * SCALE + thin * 3)
       ctx.fillStyle = label.color
-      ctx.fillText(label.name, label.x * SCALE + 2, label.y * SCALE + 2)
+      ctx.fillText(label.name, label.x * SCALE + thin * 2, label.y * SCALE + thin * 2)
     }
   }, [skinType, showGuide])
 
@@ -267,8 +281,8 @@ export default function PixelEditor({
         }
         ctx.stroke()
       }
-      drawOutline('rgba(0,0,0,0.65)', 2.5)
-      drawOutline('rgba(255,255,255,0.95)', 1.2)
+      drawOutline('rgba(0,0,0,0.65)', SCALE * 0.3)
+      drawOutline('rgba(255,255,255,0.95)', SCALE * 0.15)
     } else if (activeTool === 'eyedropper') {
       const cx = mx * SCALE + SCALE / 2
       const cy = my * SCALE + SCALE / 2
@@ -277,18 +291,20 @@ export default function PixelEditor({
         ctx.strokeStyle = style; ctx.lineWidth = lw
         ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke()
       }
-      drawLine('rgba(0,0,0,0.7)', 2.5, cx - len, cy, cx + len, cy)
-      drawLine('rgba(0,0,0,0.7)', 2.5, cx, cy - len, cx, cy + len)
-      drawLine('rgba(255,255,255,0.95)', 1.2, cx - len, cy, cx + len, cy)
-      drawLine('rgba(255,255,255,0.95)', 1.2, cx, cy - len, cx, cy + len)
-      ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2)
+      const lw1 = SCALE * 0.3, lw2 = SCALE * 0.15
+      drawLine('rgba(0,0,0,0.7)', lw1, cx - len, cy, cx + len, cy)
+      drawLine('rgba(0,0,0,0.7)', lw1, cx, cy - len, cx, cy + len)
+      drawLine('rgba(255,255,255,0.95)', lw2, cx - len, cy, cx + len, cy)
+      drawLine('rgba(255,255,255,0.95)', lw2, cx, cy - len, cx, cy + len)
+      ctx.beginPath(); ctx.arc(cx, cy, SCALE * 0.35, 0, Math.PI * 2)
       ctx.fillStyle = color || '#ffffff'; ctx.fill()
-      ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.stroke()
+      ctx.strokeStyle = '#000'; ctx.lineWidth = lw2; ctx.stroke()
       if (color) {
+        const off = SCALE * 0.75
         ctx.fillStyle = color
-        ctx.fillRect(cx + 6, cy + 6, SCALE, SCALE)
-        ctx.strokeStyle = '#000'; ctx.lineWidth = 1
-        ctx.strokeRect(cx + 6, cy + 6, SCALE, SCALE)
+        ctx.fillRect(cx + off, cy + off, SCALE, SCALE)
+        ctx.strokeStyle = '#000'; ctx.lineWidth = lw2
+        ctx.strokeRect(cx + off, cy + off, SCALE, SCALE)
       }
     } else if (activeTool === 'fill') {
       const cx = mx * SCALE + SCALE / 2
@@ -298,16 +314,17 @@ export default function PixelEditor({
         ctx.strokeStyle = style; ctx.lineWidth = lw
         ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke()
       }
-      drawLine('rgba(0,0,0,0.7)', 2.5, cx - len, cy, cx + len, cy)
-      drawLine('rgba(0,0,0,0.7)', 2.5, cx, cy - len, cx, cy + len)
-      drawLine('rgba(255,255,255,0.95)', 1.2, cx - len, cy, cx + len, cy)
-      drawLine('rgba(255,255,255,0.95)', 1.2, cx, cy - len, cx, cy + len)
+      const lw1 = SCALE * 0.3, lw2 = SCALE * 0.15
+      drawLine('rgba(0,0,0,0.7)', lw1, cx - len, cy, cx + len, cy)
+      drawLine('rgba(0,0,0,0.7)', lw1, cx, cy - len, cx, cy + len)
+      drawLine('rgba(255,255,255,0.95)', lw2, cx - len, cy, cx + len, cy)
+      drawLine('rgba(255,255,255,0.95)', lw2, cx, cy - len, cx, cy + len)
       ctx.font = `${SCALE * 1.4}px serif`
       ctx.textBaseline = 'top'; ctx.textAlign = 'left'
-      ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 3
-      ctx.shadowOffsetX = 1; ctx.shadowOffsetY = 1
+      ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = SCALE * 0.35
+      ctx.shadowOffsetX = lw2; ctx.shadowOffsetY = lw2
       ctx.fillStyle = '#ffffff'
-      ctx.fillText('🪣', cx + 5, cy + 5)
+      ctx.fillText('🪣', cx + SCALE * 0.6, cy + SCALE * 0.6)
       ctx.shadowColor = 'transparent'
     }
     // rect-select and magic-wand use CSS cursor (no canvas drawing)
@@ -340,7 +357,7 @@ export default function PixelEditor({
     let running = true
     const tick = () => {
       if (!running) return
-      dashOffsetRef.current = (dashOffsetRef.current + 0.35) % 8
+      dashOffsetRef.current = (dashOffsetRef.current + 0.35 * (SCALE / 8)) % (ANT_DASH * 2)
       drawSelectionOverlay(selection, shadePreview)
       selAnimRef.current = requestAnimationFrame(tick)
     }
@@ -514,13 +531,13 @@ export default function PixelEditor({
     const viewY = e.clientY - rect.top
     const oldZoom = zoomRef.current
     const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15
-    const newZoom = Math.max(0.5, Math.min(12, oldZoom * factor))
-    const logicalX = (scrollEl.scrollLeft + viewX) / oldZoom
-    const logicalY = (scrollEl.scrollTop + viewY) / oldZoom
+    const newZoom = Math.max(0.25, Math.min(32, oldZoom * factor))
+    const logicalX = (scrollEl.scrollLeft + viewX - PAD) / oldZoom
+    const logicalY = (scrollEl.scrollTop  + viewY - PAD) / oldZoom
     setZoom(newZoom)
     requestAnimationFrame(() => {
-      scrollEl.scrollLeft = logicalX * newZoom - viewX
-      scrollEl.scrollTop = logicalY * newZoom - viewY
+      scrollEl.scrollLeft = logicalX * newZoom + PAD - viewX
+      scrollEl.scrollTop  = logicalY * newZoom + PAD - viewY
     })
   }, [])
 
@@ -576,24 +593,25 @@ export default function PixelEditor({
 
   return (
     <div className="pixel-editor-scroll" ref={scrollRef}>
-      <div style={{ width: SIZE * zoom, height: SIZE * zoom, position: 'relative', flexShrink: 0, margin: 'auto' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, width: SIZE, height: SIZE, transformOrigin: '0 0', transform: `scale(${zoom})` }}>
+      {/* Outer box adds PAD on each side so you can pan beyond the canvas edge */}
+      <div style={{ width: SIZE * zoom + 2 * PAD, height: SIZE * zoom + 2 * PAD, position: 'relative', flexShrink: 0 }}>
+        <div style={{ position: 'absolute', top: PAD, left: PAD, width: SIZE, height: SIZE, transformOrigin: '0 0', transform: `scale(${zoom})` }}>
           <div className="pixel-editor-wrap" style={{ width: SIZE, height: SIZE, position: 'relative' }}>
             {/* Layer 0: guide silhouette fills (below skin) */}
             <canvas ref={guideCanvasRef} width={SIZE} height={SIZE}
-              style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }} />
+              style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', imageRendering: 'pixelated' }} />
             {/* Layer 1: skin pixels */}
             <canvas ref={canvasRef} width={SIZE} height={SIZE}
               style={{ position: 'absolute', top: 0, left: 0, imageRendering: 'pixelated' }} />
-            {/* Layer 2: grid + borders + labels */}
+            {/* Layer 2: grid + borders + labels — auto for smooth anti-aliased lines */}
             <canvas ref={overlayRef} width={SIZE} height={SIZE}
               style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', imageRendering: 'auto' }} />
-            {/* Layer 3: selection (marching ants) */}
+            {/* Layer 3: selection marching ants */}
             <canvas ref={selectionCanvasRef} width={SIZE} height={SIZE}
-              style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }} />
+              style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', imageRendering: 'pixelated' }} />
             {/* Layer 4: cursor preview + mouse events */}
             <canvas ref={cursorRef} width={SIZE} height={SIZE}
-              style={{ position: 'absolute', top: 0, left: 0, cursor: cursorStyle }}
+              style={{ position: 'absolute', top: 0, left: 0, cursor: cursorStyle, imageRendering: 'pixelated' }}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}

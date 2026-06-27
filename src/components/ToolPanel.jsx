@@ -11,7 +11,7 @@ export default function ToolPanel({
   brushSize, onBrushSizeChange,
   brushShape, onBrushShapeChange,
   contiguous, onContiguousChange,
-  selMode, onSelModeChange,
+  selMode, onSelModeChange, effectiveSelMode,
   hasSelection, onClearSelection,
 }) {
   const [tip, setTip] = useState(null)
@@ -27,7 +27,7 @@ export default function ToolPanel({
   const tools = [
     { id: 'pen',         label: '브러쉬',  icon: '✏️', shortcut: 'B' },
     { id: 'eraser',      label: '지우개',  icon: '⬜', shortcut: 'E' },
-    { id: 'fill',        label: '채우기',  icon: '🪣', shortcut: null },
+    { id: 'fill',        label: '채우기',  icon: '🪣', shortcut: 'G' },
     { id: 'eyedropper',  label: '스포이드', icon: '🔍', shortcut: 'I' },
     { id: 'rect-select', label: '사각선택', icon: '⬚', shortcut: 'M' },
     { id: 'magic-wand',  label: '마법봉',  icon: '✦', shortcut: null },
@@ -145,7 +145,7 @@ export default function ToolPanel({
             {SEL_MODES.map((m) => (
               <button
                 key={m.id}
-                className={`mc-btn sel-mode-btn ${selMode === m.id ? 'active' : ''}`}
+                className={`mc-btn sel-mode-btn ${effectiveSelMode === m.id ? 'active' : ''}`}
                 onClick={() => onSelModeChange(m.id)}
                 onMouseEnter={(e) => showTip(e,
                   m.shortcut ? `${m.label} — ${m.desc} : ${m.shortcut}` : `${m.label} — ${m.desc}`
