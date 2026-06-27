@@ -267,6 +267,7 @@ export default function App() {
   const [shadeColors, setShadeColors] = useState(['', ''])
   const [shadeToleranceMinus, setShadeToleranceMinus] = useState(30)
   const [shadeTolerancePlus, setShadeTolerancePlus] = useState(30)
+  const [shadeLTolerance, setShadeLTolerance] = useState(50)
   const [pickingSlot, setPickingSlot] = useState(null)
   const [pickingPanel, setPickingPanel] = useState(null)
   pickingSlotRef.current = pickingSlot
@@ -321,23 +322,24 @@ export default function App() {
       setShadePreviewSel(null)
       return
     }
-    const srcH = rgbToHsl(hexToRgb(sourceColor)).h
+    const srcHsl = rgbToHsl(hexToRgb(sourceColor))
     const ctx = skinCanvas.getContext('2d')
     const img = ctx.getImageData(0, 0, 64, 64)
     const d = img.data
     const sel = new Set()
     for (let i = 0; i < d.length; i += 4) {
       if (d[i + 3] === 0) continue
-      const pH = rgbToHsl({ r: d[i], g: d[i + 1], b: d[i + 2] }).h
-      let delta = pH - srcH
+      const pHsl = rgbToHsl({ r: d[i], g: d[i + 1], b: d[i + 2] })
+      if (Math.abs(pHsl.l - srcHsl.l) * 100 > shadeLTolerance) continue
+      let delta = pHsl.h - srcHsl.h
       if (delta > 180) delta -= 360
       if (delta < -180) delta += 360
       if (delta >= -shadeToleranceMinus && delta <= shadeTolerancePlus) sel.add(i / 4)
     }
     setShadePreviewSel(sel.size > 0 ? sel : null)
-  }, [shadeRemapOpen, sourceColor, shadeToleranceMinus, shadeTolerancePlus, skinVersion, skinCanvas])
+  }, [shadeRemapOpen, sourceColor, shadeToleranceMinus, shadeTolerancePlus, shadeLTolerance, skinVersion, skinCanvas])
 
-  const handleShadeRemap = useCallback((sourceHex, targetHex, tolMinus, tolPlus) => {
+  const handleShadeRemap = useCallback((sourceHex, targetHex, tolMinus, tolPlus, tolL) => {
     const srcHsl = rgbToHsl(hexToRgb(sourceHex))
     const tgtHsl = rgbToHsl(hexToRgb(targetHex))
     const lOffset = tgtHsl.l - srcHsl.l
@@ -348,6 +350,7 @@ export default function App() {
     for (let i = 0; i < d.length; i += 4) {
       if (d[i + 3] === 0) continue
       const pHsl = rgbToHsl({ r: d[i], g: d[i + 1], b: d[i + 2] })
+      if (Math.abs(pHsl.l - srcHsl.l) * 100 > tolL) continue
       let delta = pHsl.h - srcHsl.h
       if (delta > 180) delta -= 360
       if (delta < -180) delta += 360
@@ -588,6 +591,8 @@ export default function App() {
         tolPlus={shadeTolerancePlus}
         onTolMinusChange={setShadeToleranceMinus}
         onTolPlusChange={setShadeTolerancePlus}
+        tolL={shadeLTolerance}
+        onTolLChange={setShadeLTolerance}
         onClose={() => { setShadeRemapOpen(false); setPickingSlot(null); setPickingPanel(null) }}
       />
     )}

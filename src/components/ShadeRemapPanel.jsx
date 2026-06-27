@@ -39,6 +39,7 @@ function Slot({ index, color, isPicking, onEyedropper, onHexChange, label }) {
 export default function ShadeRemapPanel({
   onClose, onApply, pickingSlot, onEyedropper,
   colors, onColorChange, tolMinus, tolPlus, onTolMinusChange, onTolPlusChange,
+  tolL, onTolLChange,
 }) {
   const [pos, setPos] = useState(() => ({
     x: Math.max(40, window.innerWidth / 2 - 155),
@@ -91,6 +92,7 @@ export default function ShadeRemapPanel({
             onEyedropper={onEyedropper} onHexChange={onColorChange}
           />
         </div>
+        <div className="shade-tolerance-section-label">색조 범위 (H)</div>
         <div className="shade-tolerance-row">
           <span className="shade-tolerance-side-label">−</span>
           <input
@@ -111,9 +113,20 @@ export default function ShadeRemapPanel({
           />
           <span className="shade-tolerance-label">{tolPlus}°</span>
         </div>
+        <div className="shade-tolerance-section-label" style={{ marginTop: 6 }}>명도 범위 (L)</div>
+        <div className="shade-tolerance-row">
+          <span className="shade-tolerance-side-label">±</span>
+          <input
+            type="range" min={0} max={50} step={1}
+            value={tolL}
+            onChange={(e) => onTolLChange(Number(e.target.value))}
+            className="shade-slider"
+          />
+          <span className="shade-tolerance-label">{tolL}%</span>
+        </div>
         <button
           className="mc-btn"
-          onClick={() => onApply(colors[0], colors[1], tolMinus, tolPlus)}
+          onClick={() => onApply(colors[0], colors[1], tolMinus, tolPlus, tolL)}
           disabled={!canApply}
           style={{ width: '100%', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 700 }}
         >적용</button>

@@ -704,6 +704,13 @@ body.picking-color { cursor: crosshair !important; }
   flex-shrink: 0;
 }
 
+.shade-tolerance-section-label {
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.3px;
+  margin-bottom: -2px;
+}
+
 /* ─── Dropdown separator ─── */
 .mc-dropdown-sep {
   height: 1px;
