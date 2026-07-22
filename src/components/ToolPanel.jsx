@@ -6,6 +6,8 @@ const SEL_MODES = [
   { id: 'diff',    label: '차집합', icon: '⊖', desc: '기존 선택에서 제거', shortcut: 'Alt' },
 ]
 
+const MERGE_TOOLS = new Set(['rect-select', 'magic-wand'])
+
 export default function ToolPanel({
   activeTool, onToolChange,
   brushSize, onBrushSizeChange,
@@ -13,6 +15,7 @@ export default function ToolPanel({
   contiguous, onContiguousChange,
   selMode, onSelModeChange, effectiveSelMode,
   hasSelection, onClearSelection,
+  mergeMode,
 }) {
   const [tip, setTip] = useState(null)
 
@@ -33,7 +36,7 @@ export default function ToolPanel({
     { id: 'magic-wand',  label: '마법봉',  icon: '✦', shortcut: null },
   ]
 
-  const showBrush = activeTool === 'pen' || activeTool === 'eraser'
+  const showBrush = (activeTool === 'pen' || activeTool === 'eraser') && !mergeMode
   const showWandOptions = activeTool === 'magic-wand'
   const showSelMode = activeTool === 'rect-select' || activeTool === 'magic-wand'
 
@@ -52,18 +55,26 @@ export default function ToolPanel({
     <div className="tool-panel">
       <div className="panel-label">Tools</div>
       <div className="tool-grid">
-        {tools.map((tool) => (
-          <button
-            key={tool.id}
-            className={`mc-btn tool-btn ${activeTool === tool.id ? 'active' : ''}`}
-            onClick={() => onToolChange(tool.id)}
-            onMouseEnter={(e) => showTip(e, tool.shortcut ? `${tool.label} : ${tool.shortcut}` : tool.label)}
-            onMouseLeave={hideTip}
-          >
-            <span className="tool-icon">{tool.icon}</span>
-            <span className="tool-label">{tool.label}</span>
-          </button>
-        ))}
+        {tools.map((tool) => {
+          const mergeDisabled = mergeMode && !MERGE_TOOLS.has(tool.id)
+          return (
+            <button
+              key={tool.id}
+              className={`mc-btn tool-btn ${activeTool === tool.id && !mergeDisabled ? 'active' : ''}`}
+              disabled={mergeDisabled}
+              onClick={() => onToolChange(tool.id)}
+              onMouseEnter={(e) => showTip(e,
+                mergeDisabled
+                  ? '🚫 옷입히기 모드 비활성'
+                  : (tool.shortcut ? `${tool.label} : ${tool.shortcut}` : tool.label)
+              )}
+              onMouseLeave={hideTip}
+            >
+              <span className="tool-icon">{tool.icon}</span>
+              <span className="tool-label">{tool.label}</span>
+            </button>
+          )
+        })}
       </div>
 
       {showBrush && (

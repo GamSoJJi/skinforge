@@ -337,6 +337,7 @@ body.resizing-viewer { cursor: col-resize !important; user-select: none; }
   opacity: 0.45;
   cursor: default;
 }
+.tool-btn:disabled { cursor: not-allowed; }
 
 .tool-btn { flex-direction: column; gap: 2px; padding: 6px 4px; }
 .tool-icon { font-size: 1rem; }
@@ -864,6 +865,48 @@ body.picking-color { cursor: crosshair !important; }
   color: rgba(255, 255, 255, 0.3);
   flex: 1;
 }
+
+/* ─── Merge Resize Handles ─── */
+.merge-resize-h {
+  height: 5px;
+  background: var(--mc-border-dark);
+  cursor: row-resize;
+  flex-shrink: 0;
+  position: relative;
+  transition: background 0.15s;
+}
+.merge-resize-h:hover { background: #5566aa; }
+.merge-resize-h::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  height: 1px; width: 32px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 1px;
+}
+
+.merge-resize-v {
+  width: 5px;
+  background: var(--mc-border-dark);
+  cursor: col-resize;
+  flex-shrink: 0;
+  position: relative;
+  transition: background 0.15s;
+}
+.merge-resize-v:hover { background: #5566aa; }
+.merge-resize-v::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1px; height: 32px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 1px;
+}
+
+body.resizing-row { cursor: row-resize !important; user-select: none; }
+body.resizing-col { cursor: col-resize !important; user-select: none; }
 
 /* ─── Tip Banner ─── */
 .tip-banner {

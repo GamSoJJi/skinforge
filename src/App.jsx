@@ -66,6 +66,8 @@ export default function App() {
   const [brushShape, setBrushShape] = useState('square')
   const [skinType, setSkinType] = useState('normal')
   const [selection, setSelection] = useState(null)
+  const selectionRef = useRef(null)
+  selectionRef.current = selection
   const [contiguous, setContiguous] = useState(true)
   const [selMode, setSelMode] = useState('replace')
   const [shiftHeld, setShiftHeld] = useState(false)
@@ -73,6 +75,10 @@ export default function App() {
   const [uploadCount, setUploadCount] = useState(0)
   const [fileMenuOpen, setFileMenuOpen] = useState(false)
   const [mergeOpen, setMergeOpen] = useState(false)
+  const [mergedPreview, setMergedPreview] = useState(null)
+  const [mergeVersion, setMergeVersion] = useState(0)
+  const [mergeHasSel, setMergeHasSel] = useState(false)
+  const clearMergeSelRef = useRef(null)
   const [colorMenuOpen, setColorMenuOpen] = useState(false)
   const [historyPalette, setHistoryPalette] = useState(
     () => DEFAULT_PALETTE.map(c => ({ color: c, pinned: false }))
@@ -130,7 +136,7 @@ export default function App() {
   const pushUndo = useCallback(() => {
     const ctx = skinCanvas.getContext('2d')
     const snapshot = ctx.getImageData(0, 0, 64, 64)
-    undoStack.current.push(snapshot)
+    undoStack.current.push({ imageData: snapshot, selection: selectionRef.current })
     if (undoStack.current.length > 50) undoStack.current.shift()
     redoStack.current = []
     setCanUndo(true)
@@ -140,8 +146,10 @@ export default function App() {
   const undo = useCallback(() => {
     if (undoStack.current.length === 0) return
     const ctx = skinCanvas.getContext('2d')
-    redoStack.current.push(ctx.getImageData(0, 0, 64, 64))
-    ctx.putImageData(undoStack.current.pop(), 0, 0)
+    redoStack.current.push({ imageData: ctx.getImageData(0, 0, 64, 64), selection: selectionRef.current })
+    const { imageData, selection } = undoStack.current.pop()
+    ctx.putImageData(imageData, 0, 0)
+    setSelection(selection)
     setSkinVersion((v) => v + 1)
     setCanUndo(undoStack.current.length > 0)
     setCanRedo(true)
@@ -150,12 +158,19 @@ export default function App() {
   const redo = useCallback(() => {
     if (redoStack.current.length === 0) return
     const ctx = skinCanvas.getContext('2d')
-    undoStack.current.push(ctx.getImageData(0, 0, 64, 64))
-    ctx.putImageData(redoStack.current.pop(), 0, 0)
+    undoStack.current.push({ imageData: ctx.getImageData(0, 0, 64, 64), selection: selectionRef.current })
+    const { imageData, selection } = redoStack.current.pop()
+    ctx.putImageData(imageData, 0, 0)
+    setSelection(selection)
     setSkinVersion((v) => v + 1)
     setCanUndo(true)
     setCanRedo(redoStack.current.length > 0)
   }, [skinCanvas])
+
+  const handleSelectionChange = useCallback((newSel) => {
+    pushUndo()
+    setSelection(newSel)
+  }, [pushUndo])
 
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -177,7 +192,7 @@ export default function App() {
         if (pickingSlotRef.current !== null) {
           setPickingSlot(null); setPickingPanel(null); return
         }
-        setSelection(null); return
+        if (selectionRef.current !== null) handleSelectionChange(null); return
       }
       if (document.activeElement?.tagName === 'INPUT') return
       if (e.code === 'KeyB') setActiveTool('pen')
@@ -263,7 +278,14 @@ export default function App() {
     ctx.drawImage(mergedCanvas, 0, 0)
     setSkinVersion((v) => v + 1)
     setMergeOpen(false)
+    setMergedPreview(null)
+    setMergeHasSel(false)
   }, [skinCanvas, pushUndo])
+
+  const handleMergedChange = useCallback((canvas) => {
+    setMergedPreview(canvas)
+    setMergeVersion(v => v + 1)
+  }, [])
 
   const handleColorPicked = useCallback((color) => {
     setActiveColor(color)
@@ -443,7 +465,7 @@ export default function App() {
                 <button
                   className="mc-dropdown-item"
                   onClick={() => { setMergeOpen(true); setFileMenuOpen(false) }}
-                >스킨 합치기</button>
+                >옷입히기</button>
               </div>
             )}
           </div>
@@ -475,14 +497,24 @@ export default function App() {
       </header>
       <div className="workspace">
         <div className="viewer-panel" style={{ width: viewerWidth }}>
-          <SkinViewer3D skinCanvas={skinCanvas} skinVersion={skinVersion} />
+          <SkinViewer3D skinCanvas={mergeOpen && mergedPreview ? mergedPreview : skinCanvas} skinVersion={mergeOpen ? mergeVersion : skinVersion} />
         </div>
         <div
           className={`resize-handle ${isDraggingViewer ? 'dragging' : ''}`}
           onMouseDown={handleResizeStart}
         />
         <div className="canvas-area">
-          {mergeOpen ? <SkinMergeModal onClose={() => setMergeOpen(false)} onMerge={handleMergeApply} /> : <>
+          {mergeOpen ? <SkinMergeModal
+            onClose={() => { setMergeOpen(false); setMergedPreview(null); setMergeHasSel(false) }}
+            onMerge={handleMergeApply}
+            initialSkinA={skinCanvas}
+            activeTool={activeTool}
+            selMode={shiftHeld ? 'union' : altHeld ? 'diff' : selMode}
+            contiguous={contiguous}
+            onMergedChange={handleMergedChange}
+            onHasSelChange={setMergeHasSel}
+            clearSelRef={clearMergeSelRef}
+          /> : <>
           <PixelEditor
             skinCanvas={skinCanvas}
             skinVersion={skinVersion}
@@ -496,7 +528,7 @@ export default function App() {
             skinType={skinType}
             showGuide={showGuide}
             selection={selection}
-            onSelectionChange={setSelection}
+            onSelectionChange={handleSelectionChange}
             contiguous={contiguous}
             selMode={selMode}
             modalPickingSlot={pickingSlot}
@@ -560,6 +592,7 @@ export default function App() {
         </div>
         <div className="side-panel">
           <ToolPanel
+            mergeMode={mergeOpen}
             activeTool={activeTool}
             onToolChange={setActiveTool}
             brushSize={brushSize}
@@ -571,8 +604,11 @@ export default function App() {
             selMode={selMode}
             onSelModeChange={setSelMode}
             effectiveSelMode={shiftHeld ? 'union' : altHeld ? 'diff' : selMode}
-            hasSelection={selection !== null}
-            onClearSelection={() => setSelection(null)}
+            hasSelection={mergeOpen ? mergeHasSel : selection !== null}
+            onClearSelection={() => {
+              if (mergeOpen) clearMergeSelRef.current?.()
+              else handleSelectionChange(null)
+            }}
           />
           <ColorPanel
             color={activeColor}
