@@ -52,19 +52,17 @@ Light theme ships first (locked below). Dark theme is a reserved variable-slot s
   --surface-canvas:   #D8D8D8;  /* pixel-canvas checkerboard base, functional not decorative */
   --surface-viewer:   #2A2530;  /* 3D preview panel, intentionally dark for contrast framing */
 
-  /* ---- Accent: rose (primary — axis swap from coral 2026-07-23) ---- */
-  --accent-solid:        #C4407A;  /* deep rose — 4.81:1 on white ✓; used on --surface panels, never on lavender bg directly */
-  --accent-solid-hover:  #A82E65;  /* darker rose — 6.46:1 on white ✓ */
-  --accent-tint:         #FFE8F2;  /* rose-tinted bg for active tool/button states */
-  --accent-on-solid:     #FFFFFF;  /* text/icon ON rose — 4.81:1 ✓ */
+  /* ---- Accent: monochromatic purple — ONE hue, shade steps only (axis swap 2026-07-23) ---- */
+  --accent-solid:        #7250C0;  /* vibrant deep purple — 5.80:1 on white ✓ */
+  --accent-solid-hover:  #5D3FA8;  /* darker purple — 7.66:1 on white ✓ */
+  --accent-tint:         #C8BCFF;  /* saturated light purple for active btn bg on white */
+  --accent-on-solid:     #FFFFFF;  /* white on #7250C0 — 5.80:1 ✓ */
 
-  /* ---- Accent: lavender (secondary — now the chromatic identity of the page bg) ---- */
-  --accent-secondary:         #9B8EC4;  /* lavender — decorative fills, informational labels on dark surfaces */
+  /* ---- Accent secondary: mid-shade of same hue ---- */
+  --accent-secondary:         #9B8EC4;  /* mid lavender — viewer labels, decorative fills */
   --accent-secondary-tint:    #EAE6FF;  /* == --background; unified with page base */
   --accent-secondary-border:  #8C7EB5;  /* guide-track / functional non-text edges — 3.63:1 on white ✓ */
-
-  /* ---- Accent: butter (tertiary — decorative only) ---- */
-  --accent-tertiary: #FFD166;  /* illustration/decoration only — never load-bearing */
+  /* NOTE: --accent-tertiary removed — single-hue palette has no tertiary color role */
 
   /* ---- Text ---- */
   --text:            #2D2040;  /* deep purple-navy — 15.1:1 on white ✓, 12.4:1 on lavender bg ✓ */
@@ -131,8 +129,8 @@ Computed with the WCAG 2.1 relative-luminance formula. **Lavender-base axis swap
 | `--text-secondary` #5C5570 on `--surface` #FFFFFF | 7.0:1 | ≥4.5:1 body | PASS |
 | `--text-secondary` #5C5570 on `--background` #EAE6FF | 5.8:1 | ≥4.5:1 body | PASS |
 | `--text-secondary` #5C5570 on `--surface-alt` #DDD8F8 | 5.1:1 | ≥4.5:1 body (hover) | PASS |
-| `--accent-solid` #C4407A on `--surface` #FFFFFF | 4.81:1 | ≥4.5:1 body (rose on white panels) | PASS |
-| `--accent-on-solid` #FFFFFF on `--accent-solid` #C4407A | 4.81:1 | ≥4.5:1 body (button label) | PASS |
+| `--accent-solid` #7250C0 on `--surface` #FFFFFF | 5.80:1 | ≥4.5:1 body (purple on white panels) | PASS |
+| `--accent-on-solid` #FFFFFF on `--accent-solid` #7250C0 | 5.80:1 | ≥4.5:1 body (button label) | PASS |
 | `--accent-secondary-border` #8C7EB5 on `--surface` #FFFFFF | 3.63:1 | ≥3:1 non-text | PASS |
 | `--accent-secondary` #9B8EC4 on `--surface-viewer` #2A2530 | 5.02:1 | ≥3:1 non-text-adjacent | PASS |
 | `--error-11` #86534F on `--surface` #FFFFFF | 6.98:1 | ≥4.5:1 functional text | PASS |
@@ -140,13 +138,12 @@ Computed with the WCAG 2.1 relative-luminance formula. **Lavender-base axis swap
 | `--warning-11` #6F6144 on `--surface` #FFFFFF | 6.75:1 | ≥4.5:1 functional text | PASS |
 | `--info-11` #4C677A on `--surface` #FFFFFF | 6.63:1 | ≥4.5:1 functional text | PASS |
 
-**Rose on lavender background — informational (axis swap 2026-07-23):**
+**Purple accent on lavender background — informational:**
 
 | Pairing | Contrast | Note |
 |---|---|---|
-| `--accent-solid` #C4407A on `--background` #EAE6FF | 3.95:1 | Passes large text / non-text (≥3:1) only — rose text must NOT appear at small sizes on the lavender background. All functional bars use `--surface` (white); active tool icons sit on `--accent-tint` (#FFE8F2) backgrounds. No rose body text on lavender bg is valid. |
-| `--accent-secondary` #9B8EC4 on `--background` #EAE6FF | 1.9:1 | Decorative only — lavender-on-lavender creates subtle depth, not contrast. Never load-bearing. |
-| `--accent-tertiary` #FFD166 on `--background` #EAE6FF | 1.3:1 | Illustration/decoration only. |
+| `--accent-solid` #7250C0 on `--background` #EAE6FF | 4.77:1 | Passes AA body text on lavender bg ✓ — monochromatic advantage: same hue means accent reads as deeper shade, not a competing color. |
+| `--accent-secondary` #9B8EC4 on `--background` #EAE6FF | 1.9:1 | Decorative depth only — mid lavender on pale lavender. Never load-bearing text. |
 
 **Methodology note:** These accent values are locked pins (user-selected direction, WCAG verified with standalone relative-luminance calculator). The functional-color scale (error/success/warning/info) was derived via `palette.mjs --seed` and is a fresh, hue-independent derivation.
 
