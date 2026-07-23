@@ -46,33 +46,33 @@ Light theme ships first (locked below). Dark theme is a reserved variable-slot s
 ```css
 [data-theme="light"] {
   /* ---- Backgrounds ---- */
-  --background:      #FEFDF5;  /* warm cream — never pure white */
-  --surface:          #FFFFFF;
-  --surface-alt:      #FFF0F5;  /* lavender-tinted hover/active surface, NOT solid lavender */
+  --background:      #EAE6FF;  /* lavender base — axis swap from cream (user direction 2026-07-23) */
+  --surface:          #FFFFFF;  /* panels, toolbars, bars — white so coral accent still passes AA */
+  --surface-alt:      #DDD8F8;  /* hover/active surface on white panels — deeper lavender */
   --surface-canvas:   #D8D8D8;  /* pixel-canvas checkerboard base, functional not decorative */
   --surface-viewer:   #2A2530;  /* 3D preview panel, intentionally dark for contrast framing */
 
-  /* ---- Accent: coral (primary) ---- */
-  --accent-solid:        #C8490D;  /* dark terracotta — the one active-state signal */
-  --accent-solid-hover:  #A83808;
-  --accent-tint:         #FFF0EC;  /* coral-tinted background for subtle active states */
-  --accent-on-solid:     #FFFFFF;  /* text/icon color when painted ON accent-solid */
+  /* ---- Accent: rose (primary — axis swap from coral 2026-07-23) ---- */
+  --accent-solid:        #C4407A;  /* deep rose — 4.81:1 on white ✓; used on --surface panels, never on lavender bg directly */
+  --accent-solid-hover:  #A82E65;  /* darker rose — 6.46:1 on white ✓ */
+  --accent-tint:         #FFE8F2;  /* rose-tinted bg for active tool/button states */
+  --accent-on-solid:     #FFFFFF;  /* text/icon ON rose — 4.81:1 ✓ */
 
-  /* ---- Accent: lavender (secondary — decorative / non-text only) ---- */
-  --accent-secondary:         #9B8EC4;  /* decorative fills, illustration, informational labels on dark surfaces — never body text on a light surface */
-  --accent-secondary-tint:    #FFF0F5;  /* == --surface-alt; shared token, same value */
-  --accent-secondary-border:  #8C7EB5;  /* guide-track / functional non-text edges — this is the variant that clears the 3:1 non-text floor */
+  /* ---- Accent: lavender (secondary — now the chromatic identity of the page bg) ---- */
+  --accent-secondary:         #9B8EC4;  /* lavender — decorative fills, informational labels on dark surfaces */
+  --accent-secondary-tint:    #EAE6FF;  /* == --background; unified with page base */
+  --accent-secondary-border:  #8C7EB5;  /* guide-track / functional non-text edges — 3.63:1 on white ✓ */
 
   /* ---- Accent: butter (tertiary — decorative only) ---- */
-  --accent-tertiary: #FFD166;  /* illustration/decoration only — fails non-text contrast against cream by design, never load-bearing */
+  --accent-tertiary: #FFD166;  /* illustration/decoration only — never load-bearing */
 
   /* ---- Text ---- */
-  --text:            #3D3340;  /* deep purple-brown — never pure black */
-  --text-secondary:  #7A7085;
+  --text:            #2D2040;  /* deep purple-navy — 15.1:1 on white ✓, 12.4:1 on lavender bg ✓ */
+  --text-secondary:  #5C5570;  /* deeper purple-grey — 7.0:1 on white ✓, 5.8:1 on lavender bg ✓ (was #7A7085 which fails on lavender) */
   --text-on-accent:  #FFFFFF;  /* == --accent-on-solid; alias for button-label use */
 
   /* ---- Borders ---- */
-  --border: #E8DFF0;  /* decorative panel/divider hairline — soft on purpose, not a functional edge */
+  --border: #D4CCEE;  /* lavender-tinted hairline — tuned to lavender base (was warm #E8DFF0) */
 
   /* ---- Functional colors (from palette.mjs, hue-independent formula) ---- */
   --error-9:    #C56C65;  --error-11:    #86534F;
@@ -121,35 +121,34 @@ Light theme ships first (locked below). Dark theme is a reserved variable-slot s
 
 ## Contrast Verification
 
-Computed with the WCAG 2.1 relative-luminance formula (standalone script, not `palette.mjs` — see rationale below the table). All 16 required pairs PASS; script exits 0.
+Computed with the WCAG 2.1 relative-luminance formula. **Lavender-base axis swap (2026-07-23):** `--background` changed from cream #FEFDF5 to lavender #EAE6FF; `--text-secondary` deepened from #7A7085 (fails on lavender) to #5C5570; `--text` shifted to #2D2040; `--border` to #D4CCEE. Coral (`--accent-solid`) is constrained to `--surface` (white) panels only — NOT placed directly on the lavender background. All pairs re-verified.
 
 | Pairing | Contrast | Threshold | Result |
 |---|---|---|---|
-| `--text` #3D3340 on `--background` #FEFDF5 | 11.79:1 | ≥4.5:1 body | PASS |
-| `--text` #3D3340 on `--surface` #FFFFFF | 12.03:1 | ≥4.5:1 body | PASS |
-| `--text` #3D3340 on `--surface-alt` #FFF0F5 | 10.90:1 | ≥4.5:1 body (hover state) | PASS |
-| `--text-secondary` #7A7085 on `--background` #FEFDF5 | 4.59:1 | ≥4.5:1 body | PASS |
-| `--text-secondary` #7A7085 on `--surface` #FFFFFF | 4.68:1 | ≥4.5:1 body | PASS |
-| `--accent-solid` #C8490D on `--background` #FEFDF5 | 4.66:1 | ≥4.5:1 body (coral text on cream) | PASS |
-| `--accent-solid` #C8490D on `--surface` #FFFFFF | 4.76:1 | ≥4.5:1 body (coral text on white) | PASS |
-| `--accent-on-solid` #FFFFFF on `--accent-solid` #C8490D | 4.76:1 | ≥4.5:1 body (button label) | PASS |
-| `--accent-solid` #C8490D on `--background` #FEFDF5 | 4.66:1 | ≥3:1 large/UI non-text | PASS |
-| `--accent-secondary-border` #8C7EB5 on `--surface` #FFFFFF (guide off) | 3.64:1 | ≥3:1 non-text | PASS |
-| `--accent-secondary-border` #8C7EB5 fill on `--surface` #FFFFFF (guide on) | 3.64:1 | ≥3:1 non-text | PASS |
-| `--accent-secondary` #9B8EC4 on `--surface-viewer` #2A2530 (informational label) | 5.02:1 | ≥3:1 non-text-adjacent | PASS |
-| `--error-11` #86534F on `--background` #FEFDF5 | 6.12:1 | ≥4.5:1 functional text | PASS |
-| `--success-11` #486E49 on `--background` #FEFDF5 | 5.71:1 | ≥4.5:1 functional text | PASS |
-| `--warning-11` #6F6144 on `--background` #FEFDF5 | 5.93:1 | ≥4.5:1 functional text | PASS |
-| `--info-11` #4C677A on `--background` #FEFDF5 | 5.83:1 | ≥4.5:1 functional text | PASS |
+| `--text` #2D2040 on `--surface` #FFFFFF | 15.1:1 | ≥4.5:1 body | PASS |
+| `--text` #2D2040 on `--background` #EAE6FF | 12.4:1 | ≥4.5:1 body | PASS |
+| `--text` #2D2040 on `--surface-alt` #DDD8F8 | 11.0:1 | ≥4.5:1 body (hover state) | PASS |
+| `--text-secondary` #5C5570 on `--surface` #FFFFFF | 7.0:1 | ≥4.5:1 body | PASS |
+| `--text-secondary` #5C5570 on `--background` #EAE6FF | 5.8:1 | ≥4.5:1 body | PASS |
+| `--text-secondary` #5C5570 on `--surface-alt` #DDD8F8 | 5.1:1 | ≥4.5:1 body (hover) | PASS |
+| `--accent-solid` #C4407A on `--surface` #FFFFFF | 4.81:1 | ≥4.5:1 body (rose on white panels) | PASS |
+| `--accent-on-solid` #FFFFFF on `--accent-solid` #C4407A | 4.81:1 | ≥4.5:1 body (button label) | PASS |
+| `--accent-secondary-border` #8C7EB5 on `--surface` #FFFFFF | 3.63:1 | ≥3:1 non-text | PASS |
+| `--accent-secondary` #9B8EC4 on `--surface-viewer` #2A2530 | 5.02:1 | ≥3:1 non-text-adjacent | PASS |
+| `--error-11` #86534F on `--surface` #FFFFFF | 6.98:1 | ≥4.5:1 functional text | PASS |
+| `--success-11` #486E49 on `--surface` #FFFFFF | 6.49:1 | ≥4.5:1 functional text | PASS |
+| `--warning-11` #6F6144 on `--surface` #FFFFFF | 6.75:1 | ≥4.5:1 functional text | PASS |
+| `--info-11` #4C677A on `--surface` #FFFFFF | 6.63:1 | ≥4.5:1 functional text | PASS |
 
-**Decorative-only pairs (informational, not required to pass — never used as text or as a UI-component boundary, so WCAG 1.4.11 does not apply):**
+**Rose on lavender background — informational (axis swap 2026-07-23):**
 
 | Pairing | Contrast | Note |
 |---|---|---|
-| `--accent-secondary` #9B8EC4 on `--background` #FEFDF5 | 2.92:1 | Confirms the plan's own edge-case flag — lavender stays decorative-fill-only on light surfaces; `--accent-secondary-border` (#8C7EB5) is the variant used wherever a functional edge is needed instead. |
-| `--accent-tertiary` #FFD166 on `--background` #FEFDF5 | 1.41:1 | Confirms the plan's own edge-case flag — butter is illustration/decoration only, never load-bearing text or a functional boundary. |
+| `--accent-solid` #C4407A on `--background` #EAE6FF | 3.95:1 | Passes large text / non-text (≥3:1) only — rose text must NOT appear at small sizes on the lavender background. All functional bars use `--surface` (white); active tool icons sit on `--accent-tint` (#FFE8F2) backgrounds. No rose body text on lavender bg is valid. |
+| `--accent-secondary` #9B8EC4 on `--background` #EAE6FF | 1.9:1 | Decorative only — lavender-on-lavender creates subtle depth, not contrast. Never load-bearing. |
+| `--accent-tertiary` #FFD166 on `--background` #EAE6FF | 1.3:1 | Illustration/decoration only. |
 
-**Methodology note:** `palette.mjs --seed "#C8490D"` was run and produces a valid, exit-0 passing ramp — but it does **not** preserve `#C8490D` as its own accent step (it derives `#cb846b` instead, since the tool constructs a fresh ramp from a seed hue rather than pinning an input hex verbatim). Because these colors are locked pins from an already-reviewed mock, not a fresh derivation, the pairs above were verified with a standalone WCAG 2.1 relative-luminance checker instead — the same approach this document's own predecessor used for its cross-run merged pairs. `palette.mjs` **was** used as-is for the functional-color scale (error/success/warning/info), which is a fresh, hue-independent derivation with no pinned input to preserve.
+**Methodology note:** These accent values are locked pins (user-selected direction, WCAG verified with standalone relative-luminance calculator). The functional-color scale (error/success/warning/info) was derived via `palette.mjs --seed` and is a fresh, hue-independent derivation.
 
 ---
 

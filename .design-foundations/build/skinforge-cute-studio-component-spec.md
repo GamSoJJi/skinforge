@@ -12,12 +12,12 @@ Three tiers. No raw hex at Tier 2 or in any consuming component CSS. Tier 0 live
 
 | Primitive | Hex | Notes |
 |-----------|-----|-------|
-| coral-dark | #C8490D | primary accent |
-| coral-darker | #A83808 | hover state of above |
-| coral-tint | #FFF0EC | accent tinted bg |
-| cream | #FEFDF5 | page background |
+| rose | #C4407A | primary accent (axis swap from coral 2026-07-23) |
+| rose-darker | #A82E65 | hover state of above |
+| rose-tint | #FFE8F2 | accent tinted bg for active states |
+| lavender | #EAE6FF | page background (axis swap from cream 2026-07-23) |
 | white | #FFFFFF | surface |
-| lavender-tint | #FFF0F5 | alt surface |
+| lavender-mid | #DDD8F8 | alt surface (hover/active on panels) |
 | gray-canvas | #D8D8D8 | pixel canvas checkerboard base |
 | dark-viewer | #2A2530 | 3D viewer panel bg |
 | lavender | #9B8EC4 | secondary accent decorative |
@@ -39,14 +39,14 @@ Three tiers. No raw hex at Tier 2 or in any consuming component CSS. Tier 0 live
 
 | Semantic Token | Tier 0 Source (light) | Usage |
 |----------------|----------------------|-------|
-| `--background` | cream | Page background |
+| `--background` | lavender | Page background |
 | `--surface` | white | Panel, card, input backgrounds |
-| `--surface-alt` | lavender-tint | Hover/active surface tint |
+| `--surface-alt` | lavender-mid | Hover/active surface tint |
 | `--surface-canvas` | gray-canvas | Pixel canvas checkerboard |
 | `--surface-viewer` | dark-viewer | 3D viewer dark bg |
-| `--accent-solid` | coral-dark | Primary active-state signal |
-| `--accent-solid-hover` | coral-darker | Hover on accent-solid |
-| `--accent-tint` | coral-tint | Active icon/button bg |
+| `--accent-solid` | rose | Primary active-state signal |
+| `--accent-solid-hover` | rose-darker | Hover on accent-solid |
+| `--accent-tint` | rose-tint | Active icon/button bg |
 | `--accent-on-solid` | white | Text/icon ON accent-solid |
 | `--accent-secondary` | lavender | Decorative fills (dark surfaces only) |
 | `--accent-secondary-tint` | lavender-tint | == --surface-alt |

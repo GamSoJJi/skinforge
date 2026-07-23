@@ -153,7 +153,7 @@ Summary: Phase 1 complete. DESIGN.md locked with Cute Studio identity — coral 
 - [x] BUILD: Discovery + design + production complete (3-tier token chain, 6 SVG icons, micro-interaction spec, radius table, sub-12px Silkscreen fix-forward remediated)
 - [x] REVIEW: PASS (all 6 DW items + 5 edge cases verified; coverage note: no browser screenshot — visual validation recommended by opening icons.html)
 - [x] Committed
-Commit: TBD
+Commit: 4b0a372
 Summary: Phase 2 complete. Component aliases (Tier 2) chain from DESIGN.md semantic tokens with no hardcoded hex. 6 chunky rounded stroke SVG icons produced (pen/eraser/fill/eyedropper/selection/wand). Micro-interaction spec: scale(1.05) spring cubic-bezier(0.34,1.56,0.64,1) 220ms, prefers-reduced-motion handled. Radius table covers all 11 component types. Build pipeline complete; implementation unblocked.
 
 **Status:** complete
