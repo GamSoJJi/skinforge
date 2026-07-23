@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>SkinForge Cute Studio — Icon Reference</title>
+<style>
+  :root {
+    --background: #FEFDF5;
+    --surface: #FFFFFF;
+    --surface-alt: #FFF0F5;
+    --accent-solid: #C8490D;
+    --accent-tint: #FFF0EC;
+    --text: #3D3340;
+    --text-secondary: #7A7085;
+    --border: #E8DFF0;
+    --font-body: 'Nunito', system-ui, sans-serif;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600&family=Silkscreen&display=swap');
+  body {
+    margin: 0; padding: 32px;
+    background: var(--background);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+  }
+  h1 { font-family: 'Silkscreen', monospace; font-size: 20px; margin: 0 0 8px; color: var(--accent-solid); }
+  p.sub { color: var(--text-secondary); font-size: 12px; margin: 0 0 32px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 24px;
+    margin-bottom: 40px;
+  }
+  .icon-cell {
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .icon-label {
+    font-size: 11px; font-weight: 600; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .icon-wrap {
+    display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .icon-wrap.active {
+    background: var(--accent-tint);
+    border-color: transparent;
+  }
+  .icon-wrap svg { display: block; }
+  .icon-wrap.rest svg { color: var(--text-secondary); }
+  .icon-wrap.hover svg { color: var(--text); }
+  .icon-wrap.active svg { color: var(--accent-solid); }
+  .sizes {
+    display: flex; gap: 8px; align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+  }
+  .sizes svg { color: var(--text); }
+  .section-title {
+    font-family: 'Silkscreen', monospace;
+    font-size: 12px; color: var(--text-secondary);
+    margin: 0 0 12px; text-transform: uppercase;
+  }
+  .state-row { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+  .state-group { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .state-group span { font-size: 10px; color: var(--text-secondary); }
+  .spec {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px; margin-top: 24px;
+    font-size: 12px; line-height: 1.7; color: var(--text-secondary);
+  }
+  .spec strong { color: var(--text); }
+  table { border-collapse: collapse; width: 100%; margin-top: 12px; font-size: 12px; }
+  th { text-align: left; padding: 6px 10px; background: var(--surface-alt); color: var(--text); font-weight: 600; }
+  td { padding: 6px 10px; border-bottom: 1px solid var(--border); color: var(--text-secondary); }
+  td code { background: var(--surface-alt); padding: 1px 4px; border-radius: 4px; font-size: 11px; color: var(--text); }
+</style>
+</head>
+<body>
+<h1>SkinForge Icon Reference</h1>
+<p class="sub">Cute Studio · Phase 2 · viewBox="0 0 18 18" · stroke-width="2.5" · stroke-linecap="round" · stroke-linejoin="round" · currentColor</p>
+
+<!-- ── SVG DEFS (reusable symbols) ── -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+
+    <!-- 1. PEN (pencil) -->
+    <symbol id="icon-pen" viewBox="0 0 18 18">
+      <!-- Pencil body pentagon -->
+      <path d="M13,2 L16,5 L5.5,15.5 L2.5,12.5 Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/>
+      <!-- Nib triangle -->
+      <path d="M5.5,15.5 L3,16.5 L2.5,12.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+      <!-- Eraser cap separator -->
+      <line x1="11.8" y1="3.2" x2="14.8" y2="6.2" stroke="currentColor" stroke-linecap="round" stroke-width="1.5"/>
+    </symbol>
+
+    <!-- 2. ERASER -->
+    <symbol id="icon-eraser" viewBox="0 0 18 18">
+      <!-- Eraser block -->
+      <rect x="1.5" y="6.5" width="15" height="7" rx="2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/>
+      <!-- Rubber / paper separator -->
+      <line x1="7.5" y1="6.5" x2="7.5" y2="13.5" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+      <!-- Bottom shadow line -->
+      <line x1="2" y1="16" x2="8" y2="16" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+    </symbol>
+
+    <!-- 3. FILL BUCKET -->
+    <symbol id="icon-fill" viewBox="0 0 18 18">
+      <!-- Bucket body (open-top) -->
+      <path d="M4.5,10 L4.5,16 L13.5,16 L13.5,10" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/>
+      <!-- Top edge of bucket -->
+      <line x1="3.5" y1="10" x2="14.5" y2="10" stroke="currentColor" stroke-linecap="round" stroke-width="2.5"/>
+      <!-- Arc handle -->
+      <path d="M6.5,10 Q9,5.5 11.5,10" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+      <!-- Pour spout -->
+      <line x1="14" y1="6" x2="15.5" y2="3" stroke="currentColor" stroke-linecap="round" stroke-width="1.5"/>
+      <!-- Drip dot -->
+      <circle cx="15.5" cy="2.2" r="1.5" fill="currentColor" stroke="none"/>
+    </symbol>
+
+    <!-- 4. EYEDROPPER -->
+    <symbol id="icon-eyedropper" viewBox="0 0 18 18">
+      <!-- Barrel body (quadrilateral) -->
+      <path d="M11,2 L16,7 L8,15 L3,10 Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/>
+      <!-- Rubber bulb cap at top -->
+      <path d="M10.5,2.5 Q16.5,1.5 15.5,7.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+      <!-- Nib extension -->
+      <line x1="3" y1="10" x2="2" y2="13.5" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+      <!-- Drip dot -->
+      <circle cx="2" cy="14.5" r="1.5" fill="currentColor" stroke="none"/>
+    </symbol>
+
+    <!-- 5. SELECTION (marquee dashed rect) -->
+    <symbol id="icon-selection" viewBox="0 0 18 18">
+      <rect x="1.5" y="1.5" width="15" height="15" rx="2"
+        fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+        stroke-width="2.5" stroke-dasharray="4 3"/>
+    </symbol>
+
+    <!-- 6. MAGIC WAND -->
+    <symbol id="icon-wand" viewBox="0 0 18 18">
+      <!-- Wand stick -->
+      <line x1="16" y1="16" x2="10" y2="10" stroke="currentColor" stroke-linecap="round" stroke-width="2.5"/>
+      <!-- Sparkle cross (center ~5,5) -->
+      <line x1="5" y1="1.5" x2="5" y2="8.5" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+      <line x1="1.5" y1="5" x2="8.5" y2="5" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+      <!-- Sparkle diagonal arms (shorter) -->
+      <line x1="2.9" y1="2.9" x2="7.1" y2="7.1" stroke="currentColor" stroke-linecap="round" stroke-width="1.5"/>
+      <line x1="7.1" y1="2.9" x2="2.9" y2="7.1" stroke="currentColor" stroke-linecap="round" stroke-width="1.5"/>
+    </symbol>
+
+  </defs>
+</svg>
+
+<!-- ── SECTION 1: All States at 18px ── -->
+<p class="section-title">All States — 18px (native)</p>
+<div class="grid">
+
+  <div class="icon-cell">
+    <span class="icon-label">Pen</span>
+    <div class="state-row">
+      <div class="state-group">
+        <div class="icon-wrap rest"><svg width="18" height="18"><use href="#icon-pen"/></svg></div>
+        <span>rest</span>
+      </div>
+      <div class="state-group">
+        <div class="icon-wrap hover"><svg width="18" height="18"><use href="#icon-pen"/></svg></div>
+        <span>hover</span>
+      </div>
+      <div class="state-group">
+        <div class="icon-wrap active"><svg width="18" height="18"><use href="#icon-pen"/></svg></div>
+        <span>active</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="icon-cell">
+    <span class="icon-label">Eraser</span>
+    <div class="state-row">
+      <div class="state-group">
+        <div class="icon-wrap rest"><svg width="18" height="18"><use href="#icon-eraser"/></svg></div>
+        <span>rest</span>
+      </div>
+      <div class="state-group">
+        <div class="icon-wrap hover"><svg width="18" height="18"><use href="#icon-eraser"/></svg></div>
+        <span>hover</span>
+      </div>
+      <div class="state-group">
+        <div class="icon-wrap active"><svg width="18" height="18"><use href="#icon-eraser"/></svg></div>
+        <span>active</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="icon-cell">
+    <span class="icon-label">Fill</span>
+    <div class="state-row">
+      <div class="state-group">
+        <div class="icon-wrap rest"><svg width="18" height="18"><use href="#icon-fill"/></svg></div>
+        <span>rest</span>
+      </div>
+      <div class="state-group">
+        <div class="icon-wrap hover"><svg width="18" height="18"><use href="#icon-fill"/></svg></div>
+        <span>hover</span>
+      </div>
+      <div class="state-group">
+        <div class="icon-wrap active"><svg width="18" height="18"><use href="#icon-fill"/></svg></div>
+        <span>active</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="icon-cell">
+    <span class="icon-label">Eyedropper</span>
+    <div class="state-row">
+      <div class="state-group">
+        <div class="icon-wrap rest"><svg width="18" height="18"><use href="#icon-eyedropper"/></svg></div>
+        <span>rest</span>
+      </div>
+      <div class="state-group">
+        <div class="icon-wrap hover"><svg width="18" height="18"><use href="#icon-eyedropper"/></svg></div>
+        <span>hover</span>
+      </div>
+      <div class="state-group">
+        <div class="icon-wrap active"><svg width="18" height="18"><use href="#icon-eyedropper"/></svg></div>
+        <span>active</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="icon-cell">
+    <span class="icon-label">Selection</span>
+    <div class="state-row">
+      <div class="state-group">
+        <div class="icon-wrap rest"><svg width="18" height="18"><use href="#icon-selection"/></svg></div>
+        <span>rest</span>
+      </div>
+      <div class="state-group">
+        <div class="icon-wrap hover"><svg width="18" height="18"><use href="#icon-selection"/></svg></div>
+        <span>hover</span>
+      </div>
+      <div class="state-group">
+        <div class="icon-wrap active"><svg width="18" height="18"><use href="#icon-selection"/></svg></div>
+        <span>active</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="icon-cell">
+    <span class="icon-label">Magic Wand</span>
+    <div class="state-row">
+      <div class="state-group">
+        <div class="icon-wrap rest"><svg width="18" height="18"><use href="#icon-wand"/></svg></div>
+        <span>rest</span>
+      </div>
+      <div class="state-group">
+        <div class="icon-wrap hover"><svg width="18" height="18"><use href="#icon-wand"/></svg></div>
+        <span>hover</span>
+      </div>
+      <div class="state-group">
+        <div class="icon-wrap active"><svg width="18" height="18"><use href="#icon-wand"/></svg></div>
+        <span>active</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── SECTION 2: Scale verification at 16 / 20 / 24px ── -->
+<p class="section-title">Scale Verification — 16 / 20 / 24px</p>
+<div style="display:flex; gap:24px; flex-wrap:wrap; margin-bottom:40px;">
+
+  <div>
+    <p style="font-size:11px;color:var(--text-secondary);margin:0 0 8px;font-weight:600;">16px</p>
+    <div class="sizes">
+      <svg width="16" height="16" style="color:var(--text)"><use href="#icon-pen"/></svg>
+      <svg width="16" height="16" style="color:var(--text)"><use href="#icon-eraser"/></svg>
+      <svg width="16" height="16" style="color:var(--text)"><use href="#icon-fill"/></svg>
+      <svg width="16" height="16" style="color:var(--text)"><use href="#icon-eyedropper"/></svg>
+      <svg width="16" height="16" style="color:var(--text)"><use href="#icon-selection"/></svg>
+      <svg width="16" height="16" style="color:var(--text)"><use href="#icon-wand"/></svg>
+    </div>
+  </div>
+
+  <div>
+    <p style="font-size:11px;color:var(--text-secondary);margin:0 0 8px;font-weight:600;">20px (DW-2.3 check)</p>
+    <div class="sizes">
+      <svg width="20" height="20" style="color:var(--text)"><use href="#icon-pen"/></svg>
+      <svg width="20" height="20" style="color:var(--text)"><use href="#icon-eraser"/></svg>
+      <svg width="20" height="20" style="color:var(--text)"><use href="#icon-fill"/></svg>
+      <svg width="20" height="20" style="color:var(--text)"><use href="#icon-eyedropper"/></svg>
+      <svg width="20" height="20" style="color:var(--text)"><use href="#icon-selection"/></svg>
+      <svg width="20" height="20" style="color:var(--text)"><use href="#icon-wand"/></svg>
+    </div>
+  </div>
+
+  <div>
+    <p style="font-size:11px;color:var(--text-secondary);margin:0 0 8px;font-weight:600;">24px</p>
+    <div class="sizes">
+      <svg width="24" height="24" style="color:var(--text)"><use href="#icon-pen"/></svg>
+      <svg width="24" height="24" style="color:var(--text)"><use href="#icon-eraser"/></svg>
+      <svg width="24" height="24" style="color:var(--text)"><use href="#icon-fill"/></svg>
+      <svg width="24" height="24" style="color:var(--text)"><use href="#icon-eyedropper"/></svg>
+      <svg width="24" height="24" style="color:var(--text)"><use href="#icon-selection"/></svg>
+      <svg width="24" height="24" style="color:var(--text)"><use href="#icon-wand"/></svg>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── SPEC TABLE ── -->
+<div class="spec">
+  <strong>Icon Style Contract</strong>
+  <table>
+    <tr><th>Property</th><th>Value</th></tr>
+    <tr><td>viewBox</td><td><code>0 0 18 18</code></td></tr>
+    <tr><td>stroke-width</td><td><code>2.5</code> primary shapes · <code>2</code> secondary details · <code>1.5</code> fine linework</td></tr>
+    <tr><td>stroke-linecap</td><td><code>round</code></td></tr>
+    <tr><td>stroke-linejoin</td><td><code>round</code></td></tr>
+    <tr><td>fill default</td><td><code>none</code></td></tr>
+    <tr><td>fill-dot</td><td><code>fill="currentColor" stroke="none"</code> — max 1 per icon</td></tr>
+    <tr><td>Color</td><td><code>currentColor</code> throughout — zero hardcoded hex</td></tr>
+    <tr><td>Rest color</td><td><code>--text-secondary</code> (#7A7085)</td></tr>
+    <tr><td>Hover color</td><td><code>--text</code> (#3D3340)</td></tr>
+    <tr><td>Active color</td><td><code>--accent-solid</code> (#C8490D) on <code>--accent-tint</code> bg</td></tr>
+  </table>
+</div>
+
+</body>
+</html>
