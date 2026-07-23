@@ -537,7 +537,7 @@ export default function PixelEditor({
   }, [activeTool, getPixelCoords, onSelectionChange, onPixelChange, redrawSkin])
 
   const handleMouseLeave = useCallback(() => {
-    if (activeTool === 'rect-select') return  // keep preview while dragging
+    if (activeTool === 'rect-select' && isDragging.current) return  // keep rect preview only while mid-drag
     if (isDragging.current && hasPainted.current) { onPixelChange(); redrawSkin() }
     isDragging.current = false
     const c = cursorRef.current

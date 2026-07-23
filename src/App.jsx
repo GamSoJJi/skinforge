@@ -403,10 +403,17 @@ export default function App() {
   }, [skinCanvas, pushUndo])
 
   const SEL_MODES = [
-    { id: 'replace', label: '교체', icon: '⬚' },
-    { id: 'union',   label: '추가', icon: '⊕' },
-    { id: 'diff',    label: '제거', icon: '⊖' },
+    { id: 'replace', label: '교체',   icon: '⬚', shortcut: null },
+    { id: 'union',   label: '합집합', icon: '⊕', shortcut: 'Shift' },
+    { id: 'diff',    label: '차집합', icon: '⊖', shortcut: 'Alt' },
   ]
+
+  const [optTip, setOptTip] = useState(null)
+  const showOptTip = useCallback((e, text) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    setOptTip({ text, left: rect.left + rect.width / 2, top: rect.bottom + 6 })
+  }, [])
+  const hideOptTip = useCallback(() => setOptTip(null), [])
 
   const [rightWidth, setRightWidth] = useState(240)
   const [viewerH, setViewerH] = useState(210)
@@ -512,7 +519,12 @@ export default function App() {
           <div className="opt-group">
             <span className="opt-label">선택</span>
             {SEL_MODES.map(m => (
-              <button key={m.id} className={`mc-btn opt-btn${effectiveSelMode === m.id ? ' active' : ''}`} onClick={() => setSelMode(m.id)} title={m.label}>
+              <button key={m.id}
+                className={`mc-btn opt-btn${effectiveSelMode === m.id ? ' active' : ''}`}
+                onClick={() => setSelMode(m.id)}
+                onMouseEnter={(e) => showOptTip(e, m.shortcut ? `${m.label}  ${m.shortcut}` : m.label)}
+                onMouseLeave={hideOptTip}
+              >
                 {m.icon}
               </button>
             ))}
@@ -636,6 +648,12 @@ export default function App() {
 
       </div>
     </div>
+
+    {optTip && (
+      <div className="js-tooltip" style={{ position: 'fixed', left: optTip.left, top: optTip.top, transform: 'translateX(-50%)', zIndex: 9999 }}>
+        {optTip.text}
+      </div>
+    )}
 
     {colorReplaceOpen && (
       <ColorReplacePanel
