@@ -402,22 +402,28 @@ export default function App() {
     setSkinVersion(v => v + 1)
   }, [skinCanvas, pushUndo])
 
-  const [viewerWidth, setViewerWidth] = useState(420)
-  const [isDraggingViewer, setIsDraggingViewer] = useState(false)
+  const SEL_MODES = [
+    { id: 'replace', label: '교체', icon: '⬚' },
+    { id: 'union',   label: '추가', icon: '⊕' },
+    { id: 'diff',    label: '제거', icon: '⊖' },
+  ]
 
-  const handleResizeStart = useCallback((e) => {
+  const [rightWidth, setRightWidth] = useState(240)
+  const [viewerH, setViewerH] = useState(210)
+  const [isRightResizing, setIsRightResizing] = useState(false)
+
+  const handleRightResizeStart = useCallback((e) => {
     e.preventDefault()
     let lastX = e.clientX
-    setIsDraggingViewer(true)
+    setIsRightResizing(true)
     document.body.classList.add('resizing-viewer')
-
     const onMove = (e) => {
-      const delta = e.clientX - lastX
+      const delta = lastX - e.clientX
       lastX = e.clientX
-      setViewerWidth(w => Math.max(180, Math.min(700, w + delta)))
+      setRightWidth(w => Math.max(180, Math.min(500, w + delta)))
     }
     const onUp = () => {
-      setIsDraggingViewer(false)
+      setIsRightResizing(false)
       document.body.classList.remove('resizing-viewer')
       window.removeEventListener('mousemove', onMove)
       window.removeEventListener('mouseup', onUp)
@@ -426,203 +432,211 @@ export default function App() {
     window.addEventListener('mouseup', onUp)
   }, [])
 
-  const [guideTip, setGuideTip] = useState(null)
-  const showGuideTip = useCallback((e, text) => {
-    const rect = e.currentTarget.getBoundingClientRect()
-    setGuideTip({ text, left: rect.left + rect.width / 2, bottom: window.innerHeight - rect.top + 6 })
+  const handleViewerHResizeStart = useCallback((e) => {
+    e.preventDefault()
+    let lastY = e.clientY
+    document.body.classList.add('resizing-row')
+    const onMove = (e) => {
+      const delta = e.clientY - lastY
+      lastY = e.clientY
+      setViewerH(h => Math.max(100, Math.min(420, h + delta)))
+    }
+    const onUp = () => {
+      document.body.classList.remove('resizing-row')
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
   }, [])
-  const hideGuideTip = useCallback(() => setGuideTip(null), [])
+
+  const effectiveSelMode = shiftHeld ? 'union' : altHeld ? 'diff' : selMode
+  const showBrushOpts = !mergeOpen && (activeTool === 'pen' || activeTool === 'eraser')
+  const showSelOpts = activeTool === 'rect-select' || activeTool === 'magic-wand'
+  const hasSelectionActive = mergeOpen ? mergeHasSel : selection !== null
 
   return (
     <>
     <div className="app">
-      <header className="mc-header">
+
+      {/* ── Menu Bar ── */}
+      <header className="ps-menubar">
         <img src="/favicon-32.png" alt="logo" className="mc-logo" />
         <h1 className="mc-title">SkinForge</h1>
         <nav className="mc-nav">
           <div className="mc-menu-item" ref={fileMenuRef}>
-            <button
-              className={`mc-menu-btn ${fileMenuOpen ? 'active' : ''}`}
-              onClick={() => setFileMenuOpen((v) => !v)}
-            >파일</button>
+            <button className={`mc-menu-btn${fileMenuOpen ? ' active' : ''}`} onClick={() => setFileMenuOpen(v => !v)}>파일</button>
             {fileMenuOpen && (
               <div className="mc-dropdown">
-                <label className="mc-dropdown-item">
-                  불러오기
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".png"
-                    style={{ display: 'none' }}
-                    onChange={handleUpload}
-                  />
+                <label className="mc-dropdown-item">불러오기
+                  <input ref={fileInputRef} type="file" accept=".png" style={{ display: 'none' }} onChange={handleUpload} />
                 </label>
-                <button
-                  className="mc-dropdown-item"
-                  onClick={() => { handleDownload(); setFileMenuOpen(false) }}
-                >내보내기</button>
+                <button className="mc-dropdown-item" onClick={() => { handleDownload(); setFileMenuOpen(false) }}>내보내기</button>
                 <div className="mc-dropdown-sep" />
-                <button
-                  className="mc-dropdown-item"
-                  onClick={() => { setMergeOpen(true); setFileMenuOpen(false) }}
-                >옷입히기</button>
+                <button className="mc-dropdown-item" onClick={() => { setMergeOpen(true); setFileMenuOpen(false) }}>옷입히기</button>
               </div>
             )}
           </div>
           <div className="mc-menu-item" ref={colorMenuRef}>
-            <button
-              className={`mc-menu-btn ${colorMenuOpen ? 'active' : ''}`}
-              onClick={() => setColorMenuOpen(v => !v)}
-            >색상</button>
+            <button className={`mc-menu-btn${colorMenuOpen ? ' active' : ''}`} onClick={() => setColorMenuOpen(v => !v)}>색상</button>
             {colorMenuOpen && (
               <div className="mc-dropdown">
-                <button
-                  className="mc-dropdown-item"
-                  onClick={() => { setColorReplaceOpen(true); setShadeRemapOpen(false); setColorMenuOpen(false) }}
-                >
-                  <span>색상 변경</span>
-                  <span className="mc-dropdown-shortcut">{MOD}{SHIFT}R</span>
+                <button className="mc-dropdown-item" onClick={() => { setColorReplaceOpen(true); setShadeRemapOpen(false); setColorMenuOpen(false) }}>
+                  <span>색상 변경</span><span className="mc-dropdown-shortcut">{MOD}{SHIFT}R</span>
                 </button>
-                <button
-                  className="mc-dropdown-item"
-                  onClick={() => { setShadeRemapOpen(true); setColorReplaceOpen(false); setColorMenuOpen(false) }}
-                >
-                  <span>색조 변경</span>
-                  <span className="mc-dropdown-shortcut">{MOD}{SHIFT}H</span>
+                <button className="mc-dropdown-item" onClick={() => { setShadeRemapOpen(true); setColorReplaceOpen(false); setColorMenuOpen(false) }}>
+                  <span>색조 변경</span><span className="mc-dropdown-shortcut">{MOD}{SHIFT}H</span>
                 </button>
               </div>
             )}
           </div>
         </nav>
       </header>
-      <div className="workspace">
-        <div className="viewer-panel" style={{ width: viewerWidth }}>
-          <SkinViewer3D skinCanvas={mergeOpen && mergedPreview ? mergedPreview : skinCanvas} skinVersion={mergeOpen ? mergeVersion : skinVersion} />
-        </div>
-        <div
-          className={`resize-handle ${isDraggingViewer ? 'dragging' : ''}`}
-          onMouseDown={handleResizeStart}
-        />
-        <div className="canvas-area">
-          {mergeOpen ? <SkinMergeModal
-            onClose={() => { setMergeOpen(false); setMergedPreview(null); setMergeHasSel(false) }}
-            onMerge={handleMergeApply}
-            initialSkinA={skinCanvas}
-            activeTool={activeTool}
-            selMode={shiftHeld ? 'union' : altHeld ? 'diff' : selMode}
-            contiguous={contiguous}
-            onMergedChange={handleMergedChange}
-            onHasSelChange={setMergeHasSel}
-            clearSelRef={clearMergeSelRef}
-          /> : <>
-          <PixelEditor
-            skinCanvas={skinCanvas}
-            skinVersion={skinVersion}
-            onPixelChange={handlePixelChange}
-            onBeforeEdit={pushUndo}
-            activeTool={activeTool}
-            activeColor={activeColor}
-            onColorPicked={handleColorPicked}
-            brushSize={brushSize}
-            brushShape={brushShape}
-            skinType={skinType}
-            showGuide={showGuide}
-            selection={selection}
-            onSelectionChange={handleSelectionChange}
-            contiguous={contiguous}
-            selMode={selMode}
-            modalPickingSlot={pickingSlot}
-            onModalColorPick={handleModalColorPick}
-            shadePreview={shadePreviewSel}
-          />
-          <TipBanner />
-          <div className="guide-bar">
-            <div className="guide-group">
-              <span className="guide-bar-label">가이드</span>
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={showGuide}
-                  onChange={(e) => setShowGuide(e.target.checked)}
-                />
-                <span className="toggle-track">
-                  <span className="toggle-thumb" />
-                </span>
-              </label>
-            </div>
-            <div className="guide-divider" />
-            <div className="guide-group">
-              <span className={`guide-type-label ${skinType === 'normal' ? 'active' : ''}`}>노말</span>
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={skinType === 'slim'}
-                  onChange={(e) => setSkinType(e.target.checked ? 'slim' : 'normal')}
-                />
-                <span className="toggle-track">
-                  <span className="toggle-thumb" />
-                </span>
-              </label>
-              <span className={`guide-type-label ${skinType === 'slim' ? 'active' : ''}`}>슬림</span>
-            </div>
-            <div className="guide-bar-sep" />
-            <div className="guide-group">
-              <button
-                className="mc-btn guide-bar-btn"
-                onClick={undo}
-                disabled={!canUndo}
-                onMouseEnter={(e) => showGuideTip(e, `뒤로가기 : ${MOD}Z`)}
-                onMouseLeave={hideGuideTip}
-              >↩</button>
-              <button
-                className="mc-btn guide-bar-btn"
-                onClick={redo}
-                disabled={!canRedo}
-                onMouseEnter={(e) => showGuideTip(e, `앞으로가기 : ${REDO_KEY}`)}
-                onMouseLeave={hideGuideTip}
-              >↪</button>
-            </div>
-            {guideTip && (
-              <div className="js-tooltip guide-bar-tip" style={{ left: guideTip.left, bottom: guideTip.bottom }}>
-                {guideTip.text}
-              </div>
+
+      {/* ── Tool Options Bar ── */}
+      <div className="ps-options-bar">
+        {showBrushOpts && (
+          <div className="opt-group">
+            <span className="opt-label">크기</span>
+            <button className="mc-btn opt-btn" onClick={() => setBrushSize(s => Math.max(1, s - 1))}>‹</button>
+            <input type="number" className="mc-input opt-input" min={1} max={16} value={brushSize}
+              onChange={e => { const v = parseInt(e.target.value); if (!isNaN(v)) setBrushSize(Math.max(1, Math.min(16, v))) }} />
+            <button className="mc-btn opt-btn" onClick={() => setBrushSize(s => Math.min(16, s + 1))}>›</button>
+            <div className="opt-divider" />
+            <span className="opt-label">모양</span>
+            <button className={`mc-btn opt-btn${brushShape === 'square' ? ' active' : ''}`} onClick={() => setBrushShape('square')}>■</button>
+            <button className={`mc-btn opt-btn${brushShape === 'circle' ? ' active' : ''}`} onClick={() => setBrushShape('circle')}>●</button>
+          </div>
+        )}
+        {showSelOpts && (
+          <div className="opt-group">
+            <span className="opt-label">선택</span>
+            {SEL_MODES.map(m => (
+              <button key={m.id} className={`mc-btn opt-btn${effectiveSelMode === m.id ? ' active' : ''}`} onClick={() => setSelMode(m.id)} title={m.label}>
+                {m.icon}
+              </button>
+            ))}
+            {activeTool === 'magic-wand' && (
+              <>
+                <div className="opt-divider" />
+                <label className="opt-check">
+                  <input type="checkbox" checked={contiguous} onChange={e => setContiguous(e.target.checked)} />
+                  <span>근접</span>
+                </label>
+              </>
+            )}
+            {hasSelectionActive && (
+              <>
+                <div className="opt-divider" />
+                <button className="mc-btn opt-btn opt-clear" onClick={() => {
+                  if (mergeOpen) clearMergeSelRef.current?.()
+                  else handleSelectionChange(null)
+                }}>선택해제</button>
+              </>
             )}
           </div>
-          </>}
-        </div>
-        <div className="side-panel">
-          <ToolPanel
-            mergeMode={mergeOpen}
-            activeTool={activeTool}
-            onToolChange={setActiveTool}
-            brushSize={brushSize}
-            onBrushSizeChange={setBrushSize}
-            brushShape={brushShape}
-            onBrushShapeChange={setBrushShape}
-            contiguous={contiguous}
-            onContiguousChange={setContiguous}
-            selMode={selMode}
-            onSelModeChange={setSelMode}
-            effectiveSelMode={shiftHeld ? 'union' : altHeld ? 'diff' : selMode}
-            hasSelection={mergeOpen ? mergeHasSel : selection !== null}
-            onClearSelection={() => {
-              if (mergeOpen) clearMergeSelRef.current?.()
-              else handleSelectionChange(null)
-            }}
-          />
-          <ColorPanel
-            color={activeColor}
-            onChange={setActiveColor}
-            skinCanvas={skinCanvas}
-            skinVersion={skinVersion}
-            uploadCount={uploadCount}
-            historyPalette={historyPalette}
-            onHistoryAdd={addToHistory}
-            onPinToggle={handlePinToggle}
-          />
+        )}
+        <div className="opt-spacer" />
+        <div className="opt-group">
+          <span className="opt-label">가이드</span>
+          <label className="toggle-switch">
+            <input type="checkbox" checked={showGuide} onChange={e => setShowGuide(e.target.checked)} />
+            <span className="toggle-track"><span className="toggle-thumb" /></span>
+          </label>
+          <div className="opt-divider" />
+          <span className={`opt-label${skinType === 'normal' ? ' active' : ''}`}>노말</span>
+          <label className="toggle-switch">
+            <input type="checkbox" checked={skinType === 'slim'} onChange={e => setSkinType(e.target.checked ? 'slim' : 'normal')} />
+            <span className="toggle-track"><span className="toggle-thumb" /></span>
+          </label>
+          <span className={`opt-label${skinType === 'slim' ? ' active' : ''}`}>슬림</span>
+          <div className="opt-divider" />
+          <button className="mc-btn opt-btn" onClick={undo} disabled={!canUndo} title={`뒤로가기 ${MOD}Z`}>↩</button>
+          <button className="mc-btn opt-btn" onClick={redo} disabled={!canRedo} title={`앞으로가기 ${REDO_KEY}`}>↪</button>
         </div>
       </div>
+
+      {/* ── Main Workspace ── */}
+      <div className="ps-workspace">
+
+        {/* Left vertical toolbar */}
+        <ToolPanel
+          activeTool={activeTool}
+          onToolChange={setActiveTool}
+          mergeMode={mergeOpen}
+        />
+
+        {/* Center canvas */}
+        <div className="ps-canvas">
+          {mergeOpen
+            ? <SkinMergeModal
+                onClose={() => { setMergeOpen(false); setMergedPreview(null); setMergeHasSel(false) }}
+                onMerge={handleMergeApply}
+                initialSkinA={skinCanvas}
+                activeTool={activeTool}
+                selMode={effectiveSelMode}
+                contiguous={contiguous}
+                onMergedChange={handleMergedChange}
+                onHasSelChange={setMergeHasSel}
+                clearSelRef={clearMergeSelRef}
+              />
+            : <>
+                <PixelEditor
+                  skinCanvas={skinCanvas}
+                  skinVersion={skinVersion}
+                  onPixelChange={handlePixelChange}
+                  onBeforeEdit={pushUndo}
+                  activeTool={activeTool}
+                  activeColor={activeColor}
+                  onColorPicked={handleColorPicked}
+                  brushSize={brushSize}
+                  brushShape={brushShape}
+                  skinType={skinType}
+                  showGuide={showGuide}
+                  selection={selection}
+                  onSelectionChange={handleSelectionChange}
+                  contiguous={contiguous}
+                  selMode={selMode}
+                  modalPickingSlot={pickingSlot}
+                  onModalColorPick={handleModalColorPick}
+                  shadePreview={shadePreviewSel}
+                />
+                <TipBanner />
+              </>
+          }
+        </div>
+
+        {/* Right panel resize handle */}
+        <div className={`resize-handle${isRightResizing ? ' dragging' : ''}`} onMouseDown={handleRightResizeStart} />
+
+        {/* Right panel: 3D viewer + color */}
+        <div className="ps-right-panel" style={{ width: rightWidth }}>
+          <div className="ps-panel-section-header">뷰어</div>
+          <div className="ps-viewer" style={{ height: viewerH }}>
+            <SkinViewer3D
+              skinCanvas={mergeOpen && mergedPreview ? mergedPreview : skinCanvas}
+              skinVersion={mergeOpen ? mergeVersion : skinVersion}
+            />
+          </div>
+          <div className="ps-panel-resize" onMouseDown={handleViewerHResizeStart} />
+          <div className="ps-panel-section-header">색상</div>
+          <div className="ps-color-scroll">
+            <ColorPanel
+              color={activeColor}
+              onChange={setActiveColor}
+              skinCanvas={skinCanvas}
+              skinVersion={skinVersion}
+              uploadCount={uploadCount}
+              historyPalette={historyPalette}
+              onHistoryAdd={addToHistory}
+              onPinToggle={handlePinToggle}
+            />
+          </div>
+        </div>
+
+      </div>
     </div>
+
     {colorReplaceOpen && (
       <ColorReplacePanel
         colors={replaceColors}
