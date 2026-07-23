@@ -500,8 +500,7 @@ export default function SkinMergeModal({ onClose, onMerge, initialSkinA, activeT
 
       <div className="merge-footer">
         <span className="merge-hint">{hint}</span>
-        <button className="mc-btn" onClick={handleApply} disabled={!merged || !selB || selB.size === 0}
-          style={{ fontWeight: 700, fontSize: '0.75rem', background: merged && selB?.size > 0 ? 'rgba(80,150,255,0.25)' : '' }}>
+        <button className="mc-btn primary" onClick={handleApply} disabled={!merged || !selB || selB.size === 0}>
           입히기
         </button>
       </div>

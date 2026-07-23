@@ -27,13 +27,49 @@ export default function ToolPanel({
 
   const hideTip = useCallback(() => setTip(null), [])
 
+  const PenIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"
+         fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 1.5 L10.5 4 L3.5 11 L1 11 L1 8.5 Z" />
+      <path d="M6.5 3 L9 5.5" />
+    </svg>
+  )
+  const EraserIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"
+         fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1.5" y="3" width="9" height="6" rx="1" />
+      <path d="M6 3 L6 9" strokeWidth="0.8" strokeDasharray="1.5 1" />
+    </svg>
+  )
+  const FillIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"
+         fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2.5 2 L7 6.5 Q8 7.5 7 8.5 L5.5 10 Q4.5 11 3.5 10 L2 8.5 Q1 7.5 2 6.5 Z" />
+      <path d="M7 6.5 L9.5 4 L8 2.5" />
+      <circle cx="10" cy="9.5" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  )
+  const EyedropperIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"
+         fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="5" cy="5" r="3.5" />
+      <path d="M7.5 7.5 L11 11" strokeWidth="1.6" />
+    </svg>
+  )
+  const StarIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"
+         fill="currentColor">
+      <path d="M6 1 L6.7 5.3 L11 6 L6.7 6.7 L6 11 L5.3 6.7 L1 6 L5.3 5.3 Z" />
+    </svg>
+  )
+
   const tools = [
-    { id: 'pen',         label: '브러쉬',  icon: '✏️', shortcut: 'B' },
-    { id: 'eraser',      label: '지우개',  icon: '⬜', shortcut: 'E' },
-    { id: 'fill',        label: '채우기',  icon: '🪣', shortcut: 'G' },
-    { id: 'eyedropper',  label: '스포이드', icon: '🔍', shortcut: 'I' },
-    { id: 'rect-select', label: '사각선택', icon: '⬚', shortcut: 'M' },
-    { id: 'magic-wand',  label: '마법봉',  icon: '✦', shortcut: null },
+    { id: 'pen',         label: '브러쉬',  icon: <PenIcon />,        shortcut: 'B' },
+    { id: 'eraser',      label: '지우개',  icon: <EraserIcon />,     shortcut: 'E' },
+    { id: 'fill',        label: '채우기',  icon: <FillIcon />,       shortcut: 'G' },
+    { id: 'eyedropper',  label: '스포이드', icon: <EyedropperIcon />, shortcut: 'I' },
+    { id: 'rect-select', label: '사각선택', icon: '⬚',               shortcut: 'M' },
+    { id: 'magic-wand',  label: '마법봉',  icon: <StarIcon />,       shortcut: null },
   ]
 
   const showBrush = (activeTool === 'pen' || activeTool === 'eraser') && !mergeMode
@@ -65,7 +101,7 @@ export default function ToolPanel({
               onClick={() => onToolChange(tool.id)}
               onMouseEnter={(e) => showTip(e,
                 mergeDisabled
-                  ? '🚫 옷입히기 모드 비활성'
+                  ? '× 옷입히기 모드 비활성'
                   : (tool.shortcut ? `${tool.label} : ${tool.shortcut}` : tool.label)
               )}
               onMouseLeave={hideTip}
