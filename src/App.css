@@ -123,8 +123,30 @@ body { margin: 0; background: var(--bg); font-family: var(--font-body); color: v
   height: 36px;
 }
 
-.theme-btn {
+.lang-toggle {
   margin-left: auto;
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+.lang-btn {
+  height: 24px;
+  padding: 0 7px;
+  background: none;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background 80ms, color 80ms;
+}
+.lang-btn:hover { background: var(--surface-alt); color: var(--text); }
+.lang-btn.active { background: var(--accent-tint); color: var(--accent); border-color: var(--accent-border); }
+
+.theme-btn {
+  margin-left: 4px;
   width: 28px;
   height: 28px;
   background: none;

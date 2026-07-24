@@ -1,25 +1,26 @@
 import { useState, useCallback } from 'react'
 import { Pencil, Eraser, PaintBucket, Pipette, Replace, SquareDashed, Wand2, Shirt } from 'lucide-react'
+import { useLang } from '../i18n/LangContext.jsx'
 
 const MERGE_TOOLS = new Set(['rect-select', 'magic-wand', 'merge'])
-
 const ICON_PROPS = { size: 18, strokeWidth: 2 }
 
-const TOOLS = [
-  { id: 'pen',           label: '브러쉬',   icon: <Pencil {...ICON_PROPS} />,        shortcut: 'B' },
-  { id: 'eraser',        label: '지우개',   icon: <Eraser {...ICON_PROPS} />,         shortcut: 'E' },
-  { id: 'fill',          label: '채우기',   icon: <PaintBucket {...ICON_PROPS} />,    shortcut: 'G' },
-  { id: 'eyedropper',    label: '스포이드', icon: <Pipette {...ICON_PROPS} />,        shortcut: 'I' },
-  { id: 'color-replace', label: '색 교체',  icon: <Replace {...ICON_PROPS} />,        shortcut: 'R' },
-  null,
-  { id: 'rect-select',   label: '사각선택', icon: <SquareDashed {...ICON_PROPS} />,   shortcut: 'M' },
-  { id: 'magic-wand',    label: '마법봉',   icon: <Wand2 {...ICON_PROPS} />,          shortcut: 'W' },
-  null,
-  { id: 'merge',         label: '옷입히기', icon: <Shirt {...ICON_PROPS} />,          shortcut: null },
-]
-
 export default function ToolPanel({ activeTool, onToolChange, mergeMode, pickingActive }) {
+  const { t } = useLang()
   const [tip, setTip] = useState(null)
+
+  const TOOLS = [
+    { id: 'pen',           label: t.tools.pen,          icon: <Pencil {...ICON_PROPS} />,        shortcut: 'B' },
+    { id: 'eraser',        label: t.tools.eraser,        icon: <Eraser {...ICON_PROPS} />,         shortcut: 'E' },
+    { id: 'fill',          label: t.tools.fill,          icon: <PaintBucket {...ICON_PROPS} />,    shortcut: 'G' },
+    { id: 'eyedropper',    label: t.tools.eyedropper,    icon: <Pipette {...ICON_PROPS} />,        shortcut: 'I' },
+    { id: 'color-replace', label: t.tools.colorReplace,  icon: <Replace {...ICON_PROPS} />,        shortcut: 'R' },
+    null,
+    { id: 'rect-select',   label: t.tools.rectSelect,    icon: <SquareDashed {...ICON_PROPS} />,   shortcut: 'M' },
+    { id: 'magic-wand',    label: t.tools.magicWand,     icon: <Wand2 {...ICON_PROPS} />,          shortcut: 'W' },
+    null,
+    { id: 'merge',         label: t.tools.merge,         icon: <Shirt {...ICON_PROPS} />,          shortcut: null },
+  ]
 
   const showTip = useCallback((e, text) => {
     const rect = e.currentTarget.getBoundingClientRect()

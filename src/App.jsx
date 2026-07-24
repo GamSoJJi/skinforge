@@ -6,6 +6,7 @@ import ToolPanel from './components/ToolPanel'
 import ColorPanel from './components/ColorPanel'
 import SkinMergeModal from './components/SkinMergeModal'
 import TipBanner from './components/TipBanner'
+import { useLang } from './i18n/LangContext.jsx'
 import './App.css'
 
 function hexToRgb(hex) {
@@ -57,6 +58,7 @@ const DEFAULT_PALETTE = [
 ]
 
 export default function App() {
+  const { lang, t, setLang } = useLang()
   const [skinCanvas] = useState(() => new OffscreenCanvas(64, 64))
   const [skinVersion, setSkinVersion] = useState(0)
   const [activeTool, setActiveTool] = useState('pen')
@@ -249,7 +251,6 @@ export default function App() {
     }
     reader.readAsDataURL(file)
     e.target.value = ''
-    setFileMenuOpen(false)
   }, [skinCanvas])
 
   const handleDownload = useCallback(() => {
@@ -346,9 +347,9 @@ export default function App() {
   }, [colorReplaceMode, handleColorReplace, handleShadeRemap, activeColor, selection, shadeToleranceMinus, shadeTolerancePlus, shadeLTolerance])
 
   const SEL_MODES = [
-    { id: 'replace', label: '교체',   icon: '⬚', shortcut: null },
-    { id: 'union',   label: '합집합', icon: '⊕', shortcut: 'Shift' },
-    { id: 'diff',    label: '차집합', icon: '⊖', shortcut: 'Alt' },
+    { id: 'replace', label: t.opts.selReplace, icon: '⬚', shortcut: null },
+    { id: 'union',   label: t.opts.selUnion,   icon: '⊕', shortcut: 'Shift' },
+    { id: 'diff',    label: t.opts.selDiff,    icon: '⊖', shortcut: 'Alt' },
   ]
 
   const [optTip, setOptTip] = useState(null)
@@ -429,7 +430,11 @@ export default function App() {
       <header className="ps-menubar">
         <img src="/favicon-32.png" alt="logo" className="mc-logo" />
         <h1 className="mc-title">SkinForge</h1>
-        <button className="theme-btn" onClick={() => setDarkMode(v => !v)} title={darkMode ? '라이트 모드' : '다크 모드'}>
+        <div className="lang-toggle">
+          <button className={`lang-btn${lang === 'ko' ? ' active' : ''}`} onClick={() => setLang('ko')}>KO</button>
+          <button className={`lang-btn${lang === 'en' ? ' active' : ''}`} onClick={() => setLang('en')}>EN</button>
+        </div>
+        <button className="theme-btn" onClick={() => setDarkMode(v => !v)} title={darkMode ? t.opts.lightMode : t.opts.darkMode}>
           {darkMode ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
         </button>
       </header>
@@ -438,15 +443,15 @@ export default function App() {
       <div className="ps-options-bar">
         {showBrushOpts && (
           <div className="opt-group">
-            <span className="opt-label">크기</span>
+            <span className="opt-label">{t.opts.size}</span>
             <button className="mc-btn opt-btn" onClick={() => setBrushSize(s => Math.max(1, s - 1))}
-              onMouseEnter={(e) => showOptTip(e, '크기 줄이기  [')} onMouseLeave={hideOptTip}>‹</button>
+              onMouseEnter={(e) => showOptTip(e, `${t.opts.sizeDown}  [`)} onMouseLeave={hideOptTip}>‹</button>
             <input type="number" className="mc-input opt-input" min={1} max={16} value={brushSize}
               onChange={e => { const v = parseInt(e.target.value); if (!isNaN(v)) setBrushSize(Math.max(1, Math.min(16, v))) }} />
             <button className="mc-btn opt-btn" onClick={() => setBrushSize(s => Math.min(16, s + 1))}
-              onMouseEnter={(e) => showOptTip(e, '크기 늘리기  ]')} onMouseLeave={hideOptTip}>›</button>
+              onMouseEnter={(e) => showOptTip(e, `${t.opts.sizeUp}  ]`)} onMouseLeave={hideOptTip}>›</button>
             <div className="opt-divider" />
-            <span className="opt-label">모양</span>
+            <span className="opt-label">{t.opts.shape}</span>
             <button className={`mc-btn opt-btn${brushShape === 'square' ? ' active' : ''}`} onClick={() => setBrushShape('square')}>
               <Square size={10} strokeWidth={0} fill="currentColor" />
             </button>
@@ -459,14 +464,14 @@ export default function App() {
           <div className="opt-group">
             <button className={`mc-btn opt-btn${colorReplaceMode === 'single' ? ' active' : ''}`}
               onClick={() => setColorReplaceMode('single')}
-              onMouseEnter={(e) => showOptTip(e, '단색 교체')} onMouseLeave={hideOptTip}>단색</button>
+              onMouseEnter={(e) => showOptTip(e, t.opts.solidMode)} onMouseLeave={hideOptTip}>{t.opts.solid}</button>
             <button className={`mc-btn opt-btn${colorReplaceMode === 'shade' ? ' active' : ''}`}
               onClick={() => setColorReplaceMode('shade')}
-              onMouseEnter={(e) => showOptTip(e, '색조 일괄 교체')} onMouseLeave={hideOptTip}>색조</button>
+              onMouseEnter={(e) => showOptTip(e, t.opts.shadeMode)} onMouseLeave={hideOptTip}>{t.opts.shade}</button>
             {colorReplaceMode === 'shade' && (
               <>
                 <div className="opt-divider" />
-                <span className="opt-label">색조</span>
+                <span className="opt-label">{t.opts.hue}</span>
                 <span className="opt-shade-prefix">−</span>
                 <input type="number" min={0} max={90}
                   value={shadeToleranceMinus}
@@ -488,7 +493,7 @@ export default function App() {
                   onChange={e => setShadeTolerancePlus(Number(e.target.value))}
                   className="opt-shade-slider" />
                 <div className="opt-divider" />
-                <span className="opt-label">명도</span>
+                <span className="opt-label">{t.opts.lightness}</span>
                 <span className="opt-shade-prefix">±</span>
                 <input type="number" min={0} max={50}
                   value={shadeLTolerance}
@@ -505,7 +510,7 @@ export default function App() {
         )}
         {showSelOpts && (
           <div className="opt-group">
-            <span className="opt-label">선택</span>
+            <span className="opt-label">{t.opts.selection}</span>
             {SEL_MODES.map(m => (
               <button key={m.id}
                 className={`mc-btn opt-btn${effectiveSelMode === m.id ? ' active' : ''}`}
@@ -521,16 +526,16 @@ export default function App() {
                 <div className="opt-divider" />
                 <label className="opt-check">
                   <input type="checkbox" checked={contiguous} onChange={e => setContiguous(e.target.checked)} />
-                  <span>근접</span>
+                  <span>{t.opts.contiguous}</span>
                 </label>
                 <div className="opt-divider" />
-                <span className="opt-label">허용치</span>
-                <button className="mc-btn opt-btn" onClick={() => setWandTolerance(t => Math.max(0, t - 5))}
-                  onMouseEnter={(e) => showOptTip(e, '허용치 감소')} onMouseLeave={hideOptTip}>‹</button>
+                <span className="opt-label">{t.opts.tolerance}</span>
+                <button className="mc-btn opt-btn" onClick={() => setWandTolerance(v => Math.max(0, v - 5))}
+                  onMouseEnter={(e) => showOptTip(e, t.opts.tolDown)} onMouseLeave={hideOptTip}>‹</button>
                 <input type="number" className="mc-input opt-input" min={0} max={255} value={wandTolerance}
                   onChange={e => { const v = parseInt(e.target.value); if (!isNaN(v)) setWandTolerance(Math.max(0, Math.min(255, v))) }} />
-                <button className="mc-btn opt-btn" onClick={() => setWandTolerance(t => Math.min(255, t + 5))}
-                  onMouseEnter={(e) => showOptTip(e, '허용치 증가')} onMouseLeave={hideOptTip}>›</button>
+                <button className="mc-btn opt-btn" onClick={() => setWandTolerance(v => Math.min(255, v + 5))}
+                  onMouseEnter={(e) => showOptTip(e, t.opts.tolUp)} onMouseLeave={hideOptTip}>›</button>
               </>
             )}
             {hasSelectionActive && (
@@ -539,29 +544,29 @@ export default function App() {
                 <button className="mc-btn opt-btn opt-clear" onClick={() => {
                   if (mergeOpen) clearMergeSelRef.current?.()
                   else handleSelectionChange(null)
-                }}>선택해제</button>
+                }}>{t.opts.selClear}</button>
               </>
             )}
             <div className="opt-divider" />
-            <span className="opt-hint"><kbd>ESC</kbd> 선택 해제</span>
+            <span className="opt-hint"><kbd>ESC</kbd> {t.opts.escHint}</span>
           </div>
         )}
         <div className="opt-file-actions">
           <button className="mc-btn opt-btn" onClick={undo} disabled={!canUndo}
-            onMouseEnter={(e) => showOptTip(e, `뒤로가기  ${MOD}Z`)} onMouseLeave={hideOptTip}>
+            onMouseEnter={(e) => showOptTip(e, `${t.opts.undo}  ${MOD}Z`)} onMouseLeave={hideOptTip}>
             <Undo2 size={14} strokeWidth={2} />
           </button>
           <button className="mc-btn opt-btn" onClick={redo} disabled={!canRedo}
-            onMouseEnter={(e) => showOptTip(e, `앞으로가기  ${REDO_KEY}`)} onMouseLeave={hideOptTip}>
+            onMouseEnter={(e) => showOptTip(e, `${t.opts.redo}  ${REDO_KEY}`)} onMouseLeave={hideOptTip}>
             <Redo2 size={14} strokeWidth={2} />
           </button>
           <div className="opt-divider" />
           <button className="mc-btn opt-btn" onClick={() => fileInputRef.current?.click()}
-            onMouseEnter={(e) => showOptTip(e, '불러오기')} onMouseLeave={hideOptTip}>
+            onMouseEnter={(e) => showOptTip(e, t.opts.open)} onMouseLeave={hideOptTip}>
             <FolderOpen size={14} strokeWidth={2} />
           </button>
           <button className="mc-btn opt-btn" onClick={handleDownload}
-            onMouseEnter={(e) => showOptTip(e, '내보내기')} onMouseLeave={hideOptTip}>
+            onMouseEnter={(e) => showOptTip(e, t.opts.export)} onMouseLeave={hideOptTip}>
             <Download size={14} strokeWidth={2} />
           </button>
           <input ref={fileInputRef} type="file" accept=".png" style={{ display: 'none' }} onChange={handleUpload} />
@@ -619,18 +624,18 @@ export default function App() {
               </>
           }
           <div className="ps-canvas-bar">
-            <span className="opt-label">가이드</span>
+            <span className="opt-label">{t.opts.guide}</span>
             <label className="toggle-switch">
               <input type="checkbox" checked={showGuide} onChange={e => setShowGuide(e.target.checked)} />
               <span className="toggle-track"><span className="toggle-thumb" /></span>
             </label>
             <div className="opt-divider" />
-            <span className={`opt-label${skinType === 'normal' ? ' active' : ''}`}>노말</span>
+            <span className={`opt-label${skinType === 'normal' ? ' active' : ''}`}>{t.opts.normal}</span>
             <label className="toggle-switch">
               <input type="checkbox" checked={skinType === 'slim'} onChange={e => setSkinType(e.target.checked ? 'slim' : 'normal')} />
               <span className="toggle-track"><span className="toggle-thumb" /></span>
             </label>
-            <span className={`opt-label${skinType === 'slim' ? ' active' : ''}`}>슬림</span>
+            <span className={`opt-label${skinType === 'slim' ? ' active' : ''}`}>{t.opts.slim}</span>
           </div>
         </div>
 

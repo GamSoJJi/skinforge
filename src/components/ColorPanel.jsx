@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { HexColorPicker } from 'react-colorful'
+import { useLang } from '../i18n/LangContext.jsx'
 
 function extractColors(skinCanvas) {
   if (!skinCanvas) return []
@@ -20,6 +21,7 @@ export default function ColorPanel({
   skinCanvas, skinVersion, uploadCount,
   historyPalette, onHistoryAdd, onPinToggle,
 }) {
+  const { t } = useLang()
   const [showPicker, setShowPicker] = useState(false)
   const [paletteMode, setPaletteMode] = useState('default')
   const [skinColors, setSkinColors] = useState([])
@@ -50,7 +52,7 @@ export default function ColorPanel({
           className="current-swatch mc-slot"
           style={{ background: color }}
           onClick={() => setShowPicker((v) => !v)}
-          title="색상 선택기 열기"
+          title={t.panel.openPicker}
         />
         <input
           className="mc-input hex-input"
@@ -74,11 +76,11 @@ export default function ColorPanel({
         <button
           className={`mc-btn tab-btn ${paletteMode === 'default' ? 'active' : ''}`}
           onClick={() => setPaletteMode('default')}
-        >기록</button>
+        >{t.panel.history}</button>
         <button
           className={`mc-btn tab-btn ${paletteMode === 'skin' ? 'active' : ''}`}
           onClick={() => setPaletteMode('skin')}
-        >스킨</button>
+        >{t.panel.skin}</button>
       </div>
 
       <div className="palette-grid">
@@ -95,7 +97,7 @@ export default function ColorPanel({
         {paletteMode === 'skin' && (
           <>
             {skinColors.length === 0 && (
-              <div className="palette-empty">스킨에서 색상 없음</div>
+              <div className="palette-empty">{t.panel.skinNoColors}</div>
             )}
             {skinColors.map((c, i) => (
               <div

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
+import { useLang } from '../i18n/LangContext.jsx'
 
 const MS = 3           // mini scale (pixel per skin-pixel)
 const MINI = 64 * MS   // 192
@@ -328,6 +329,7 @@ function ResultCanvas({ merged }) {
 // ── SkinMergeModal ────────────────────────────────────────────────────────────
 
 export default function SkinMergeModal({ onClose, onMerge, initialSkinA, activeTool, selMode, contiguous, onMergedChange, onHasSelChange, clearSelRef }) {
+  const { t } = useLang()
   const [skinA, setSkinA] = useState(() => {
     if (!initialSkinA) return null
     const copy = new OffscreenCanvas(64, 64)
@@ -466,25 +468,25 @@ export default function SkinMergeModal({ onClose, onMerge, initialSkinA, activeT
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const hint = !skinA ? '내 스킨을 먼저 불러오세요'
-    : !skinB ? '입힐 스킨을 불러오세요'
-    : !selB || selB.size === 0 ? '입힐 스킨에서 영역을 선택하세요'
+  const hint = !skinA ? t.merge.hintNoA
+    : !skinB ? t.merge.hintNoB
+    : !selB || selB.size === 0 ? t.merge.hintNoSel
     : ''
 
   return (
     <div className="merge-view" ref={mergeViewRef}>
       <div className="merge-bar">
-        <button className="mc-btn merge-back-btn" onClick={onClose} title="에디터로">
+        <button className="mc-btn merge-back-btn" onClick={onClose}>
           <ArrowLeft size={16} strokeWidth={2} />
         </button>
-        <span className="merge-bar-title">옷입히기</span>
+        <span className="merge-bar-title">{t.merge.title}</span>
         <div className="merge-mode-hints" />
         {hint && <span className="merge-bar-guide">💡 {hint}</span>}
       </div>
 
       <div className="merge-top" style={{ flex: tbSplit }} onClick={!skinB ? showToast : undefined}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, width: '100%', height: '100%' }}>
-          <span className="merge-section-label">결과</span>
+          <span className="merge-section-label">{t.merge.result}</span>
           <ResultCanvas merged={merged} />
         </div>
       </div>
@@ -494,9 +496,9 @@ export default function SkinMergeModal({ onClose, onMerge, initialSkinA, activeT
       <div className="merge-bottom" ref={mergeBottomRef} style={{ flex: 100 - tbSplit }}>
         <div className="merge-half" style={{ flex: abSplit }} onClick={!skinB ? showToast : undefined}>
           <div className="merge-section-row">
-            <span className="merge-section-label">내 스킨</span>
+            <span className="merge-section-label">{t.merge.baseSkin}</span>
             <button className="mc-btn merge-upload-btn" onClick={() => inputARef.current?.click()}>
-              {skinA ? '변경' : '불러오기'}
+              {skinA ? t.merge.change : t.merge.load}
             </button>
             <input ref={inputARef} type="file" accept=".png" style={{ display: 'none' }}
               onChange={(e) => { const f=e.target.files?.[0]; if(f){loadSkinFile(f,setSkinA);setSelA(null)} e.target.value='' }} />
@@ -509,9 +511,9 @@ export default function SkinMergeModal({ onClose, onMerge, initialSkinA, activeT
 
         <div className="merge-half" style={{ flex: 100 - abSplit }}>
           <div className="merge-section-row">
-            <span className="merge-section-label">입힐 스킨</span>
+            <span className="merge-section-label">{t.merge.outfitSkin}</span>
             <button className="mc-btn merge-upload-btn" onClick={() => inputBRef.current?.click()}>
-              {skinB ? '변경' : '불러오기'}
+              {skinB ? t.merge.change : t.merge.load}
             </button>
             <input ref={inputBRef} type="file" accept=".png" style={{ display: 'none' }}
               onChange={(e) => { const f=e.target.files?.[0]; if(f){loadSkinFile(f,setSkinB);setSelB(null)} e.target.value='' }} />
@@ -521,10 +523,10 @@ export default function SkinMergeModal({ onClose, onMerge, initialSkinA, activeT
         </div>
       </div>
 
-      {toast && <div className="merge-toast">입힐 스킨을 불러오세요</div>}
+      {toast && <div className="merge-toast">{t.merge.toastNoB}</div>}
       <div className="merge-footer">
         <button className="mc-btn primary" onClick={handleApply} disabled={!merged || !selB || selB.size === 0}>
-          입히기
+          {t.merge.apply}
         </button>
       </div>
     </div>
