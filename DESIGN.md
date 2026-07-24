@@ -84,34 +84,35 @@ Light theme ships first (locked below). Dark theme is a reserved variable-slot s
 }
 
 [data-theme="dark"] {
-  /* TBD — reserved structure only, values deferred to a follow-up sprint
-     (plan Constraint: dark-mode final values explicitly OUT of Phase 1 scope).
-     Every custom property below MUST exist here before dark mode ships;
-     names match the light block 1:1 so consuming CSS never branches on theme.
-     `src/App.css` already carries an earlier, unrelated dark palette
-     (`--bg: #1a1726` etc.) that predates this token system — it is NOT
-     wired to these names yet and is out of this phase's scope to migrate. */
-  --background: TBD;
-  --surface: TBD;
-  --surface-alt: TBD;
-  --surface-canvas: TBD;
-  --surface-viewer: TBD;
-  --accent-solid: TBD;
-  --accent-solid-hover: TBD;
-  --accent-tint: TBD;
-  --accent-on-solid: TBD;
-  --accent-secondary: TBD;
-  --accent-secondary-tint: TBD;
-  --accent-secondary-border: TBD;
-  --accent-tertiary: TBD;
-  --text: TBD;
-  --text-secondary: TBD;
-  --text-on-accent: TBD;
-  --border: TBD;
-  --error-9: TBD;   --error-11: TBD;
-  --success-9: TBD; --success-11: TBD;
-  --warning-9: TBD; --warning-11: TBD;
-  --info-9: TBD;    --info-11: TBD;
+  /* Monochrome purple dark theme (2026-07-24) — same hue HSL≈258°, deep shade steps */
+  --background:          #1A1726;  /* deep purple-navy page bg */
+  --surface:             #1E1A2E;  /* panel, toolbar, bar surfaces */
+  --surface-alt:         #2A2540;  /* hover/active surface tint */
+  --surface-canvas:      #D8D8D8;  /* unchanged — canvas checkerboard is always neutral */
+  --surface-viewer:      #110E1C;  /* 3D viewer even darker in dark mode */
+
+  /* Accent must lighten for dark bg — #7250C0 only gives 3.26:1 on #1A1726 (FAIL).
+     #A893E8 gives 6.80:1 on #1A1726 ✓ */
+  --accent-solid:        #A893E8;  /* 6.80:1 on --background ✓ */
+  --accent-solid-hover:  #BFA8FF;  /* lighter hover */
+  --accent-tint:         #2A2455;  /* dark-indigo active button bg */
+  --accent-on-solid:     #1A1726;  /* dark text on light #A893E8 button — 6.80:1 ✓ */
+
+  --accent-secondary:        #6B5FAA;
+  --accent-secondary-tint:   #1E1A2E;
+  --accent-secondary-border: #504880;
+
+  --text:           #E8E2FF;  /* near-white lavender — 13.95:1 on --background ✓ */
+  --text-secondary: #9A90C0;  /* mid lavender — 6.13:1 on --background ✓ */
+  --text-on-accent: #1A1726;  /* == --accent-on-solid */
+
+  --border: #332E55;  /* dark purple hairline */
+
+  /* Functional colors — same hue-independent values as light; they work on both grounds */
+  --error-9:    #C56C65;  --error-11:    #86534F;
+  --success-9:  #84CC86;  --success-11:  #486E49;
+  --warning-9:  #CEB47E;  --warning-11:  #6F6144;
+  --info-9:     #7AABCE;  --info-11:     #4C677A;
 }
 ```
 
