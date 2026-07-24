@@ -21,16 +21,17 @@ function buildPath(sel, scale) {
   return path
 }
 
-function drawStaticSel(ctx, sel, scale, color) {
+function drawStaticSel(ctx, sel, scale) {
   const size = 64 * scale
   ctx.clearRect(0, 0, size, size)
   if (!sel || sel.size === 0) return
   const path = buildPath(sel, scale)
   ctx.lineWidth = 1.2
   ctx.setLineDash([4, 3])
-  ctx.strokeStyle = color
-  ctx.stroke(path)
-  ctx.setLineDash([])
+  ctx.strokeStyle = 'rgba(255,255,255,0.95)'; ctx.stroke(path)
+  ctx.lineDashOffset = 4
+  ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.stroke(path)
+  ctx.setLineDash([]); ctx.lineDashOffset = 0
 }
 
 function drawGrid(ctx, size, scale) {
@@ -147,7 +148,7 @@ function useZoomPan(scrollRef, contentSize) {
 
 // ── MiniCanvas ───────────────────────────────────────────────────────────────
 
-function MiniCanvas({ skinCanvas, selection, onSelectionChange, c1, activeTool, selMode, contiguous, readOnly = false }) {
+function MiniCanvas({ skinCanvas, selection, onSelectionChange, activeTool, selMode, contiguous, readOnly = false }) {
   const scrollRef = useRef(null)
   const skinRef   = useRef(null)
   const selRef    = useRef(null)
@@ -167,9 +168,7 @@ function MiniCanvas({ skinCanvas, selection, onSelectionChange, c1, activeTool, 
     const cv = skinRef.current; if (!cv) return
     const ctx = cv.getContext('2d')
     ctx.clearRect(0, 0, MINI, MINI)
-    if (!skinCanvas) {
-      // transparent — CSS background shows through
-    } else {
+    if (skinCanvas) {
       ctx.imageSmoothingEnabled = false
       ctx.drawImage(skinCanvas, 0, 0, MINI, MINI)
     }
@@ -178,8 +177,8 @@ function MiniCanvas({ skinCanvas, selection, onSelectionChange, c1, activeTool, 
 
   useEffect(() => {
     const cv = selRef.current; if (!cv) return
-    drawStaticSel(cv.getContext('2d'), selection, MS, c1)
-  }, [selection, c1])
+    drawStaticSel(cv.getContext('2d'), selection, MS)
+  }, [selection])
 
   const getCoords = useCallback((e) => {
     const rect = selRef.current.getBoundingClientRect()
@@ -207,14 +206,13 @@ function MiniCanvas({ skinCanvas, selection, onSelectionChange, c1, activeTool, 
   }, [onSelectionChange])
 
   const handleMouseDown = useCallback((e) => {
-    if (e.button === 2) { onSelectionChange(null); return }
-    if (e.button !== 0) return
+    if (!skinCanvas || e.button !== 0) return
     e.preventDefault()
     selModeRef.current = e.shiftKey ? 'union' : e.altKey ? 'diff' : selModePropsRef.current
     isDragging.current = false
     const [x, y] = getCoords(e)
     dragStart.current = { x, y }
-  }, [getCoords, onSelectionChange])
+  }, [skinCanvas, getCoords, onSelectionChange])
 
   const handleMouseMove = useCallback((e) => {
     if (!dragStart.current || activeTool !== 'rect') return
@@ -231,12 +229,17 @@ function MiniCanvas({ skinCanvas, selection, onSelectionChange, c1, activeTool, 
     if (cur && cur.size > 0) {
       const path = buildPath(cur, MS)
       ctx.lineWidth = 1.2; ctx.setLineDash([4, 3])
-      ctx.strokeStyle = c1; ctx.stroke(path); ctx.setLineDash([])
+      ctx.strokeStyle = 'rgba(255,255,255,0.95)'; ctx.stroke(path)
+      ctx.lineDashOffset = 4; ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.stroke(path)
+      ctx.setLineDash([]); ctx.lineDashOffset = 0
     }
-    ctx.strokeStyle = c1; ctx.lineWidth = 1.2; ctx.setLineDash([4, 3])
-    ctx.strokeRect(Math.min(sx,px)*MS, Math.min(sy,py)*MS, (Math.abs(px-sx)+1)*MS, (Math.abs(py-sy)+1)*MS)
-    ctx.setLineDash([])
-  }, [activeTool, c1, getCoords])
+    const rx = Math.min(sx,px)*MS, ry = Math.min(sy,py)*MS
+    const rw = (Math.abs(px-sx)+1)*MS, rh = (Math.abs(py-sy)+1)*MS
+    ctx.lineWidth = 1.2; ctx.setLineDash([4, 3])
+    ctx.strokeStyle = 'rgba(255,255,255,0.95)'; ctx.strokeRect(rx, ry, rw, rh)
+    ctx.lineDashOffset = 4; ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.strokeRect(rx, ry, rw, rh)
+    ctx.setLineDash([]); ctx.lineDashOffset = 0
+  }, [activeTool, getCoords])
 
   const handleMouseUp = useCallback((e) => {
     if (e.button !== 0 || !dragStart.current) return
@@ -261,10 +264,10 @@ function MiniCanvas({ skinCanvas, selection, onSelectionChange, c1, activeTool, 
 
   const handleMouseLeave = useCallback(() => {
     if (isDragging.current) {
-      drawStaticSel(selRef.current?.getContext('2d'), selRef_.current, MS, c1)
+      drawStaticSel(selRef.current?.getContext('2d'), selRef_.current, MS)
     }
     dragStart.current = null; isDragging.current = false
-  }, [c1])
+  }, [])
 
   const cursor = readOnly ? 'not-allowed' : !skinCanvas ? 'default' : activeTool === 'wand' ? 'cell' : 'crosshair'
 
@@ -339,6 +342,13 @@ export default function SkinMergeModal({ onClose, onMerge, initialSkinA, activeT
   const inputBRef = useRef(null)
   const mergeViewRef  = useRef(null)
   const mergeBottomRef = useRef(null)
+  const [toast, setToast] = useState(false)
+  const toastTimerRef = useRef(null)
+  const showToast = useCallback(() => {
+    setToast(true)
+    clearTimeout(toastTimerRef.current)
+    toastTimerRef.current = setTimeout(() => setToast(false), 2000)
+  }, [])
 
   const [tbSplit, setTbSplit_] = useState(50)
   const [abSplit, setAbSplit_] = useState(50)
@@ -451,10 +461,10 @@ export default function SkinMergeModal({ onClose, onMerge, initialSkinA, activeT
   }
 
   useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    const onKey = (e) => { if (e.key === 'Escape') { setSelA(null); setSelB(null) } }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  }, [])
 
   const hint = !skinA ? '내 스킨을 먼저 불러오세요'
     : !skinB ? '입힐 스킨을 불러오세요'
@@ -468,13 +478,11 @@ export default function SkinMergeModal({ onClose, onMerge, initialSkinA, activeT
           <ArrowLeft size={16} strokeWidth={2} />
         </button>
         <span className="merge-bar-title">옷입히기</span>
-        <div className="merge-mode-hints">
-          <span><kbd>우클릭</kbd> 선택 초기화</span>
-        </div>
+        <div className="merge-mode-hints" />
         {hint && <span className="merge-bar-guide">💡 {hint}</span>}
       </div>
 
-      <div className="merge-top" style={{ flex: tbSplit }}>
+      <div className="merge-top" style={{ flex: tbSplit }} onClick={!skinB ? showToast : undefined}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, width: '100%', height: '100%' }}>
           <span className="merge-section-label">결과</span>
           <ResultCanvas merged={merged} />
@@ -484,35 +492,36 @@ export default function SkinMergeModal({ onClose, onMerge, initialSkinA, activeT
       <div className="merge-resize-h" onMouseDown={handleTBResizeStart} />
 
       <div className="merge-bottom" ref={mergeBottomRef} style={{ flex: 100 - tbSplit }}>
-        <div className="merge-half" style={{ flex: abSplit }}>
-          <span className="merge-section-label">
-            <span className="merge-dot-a">●</span> 내 스킨 <span style={{ opacity: 0.4 }}>(베이스)</span>
-          </span>
+        <div className="merge-half" style={{ flex: abSplit }} onClick={!skinB ? showToast : undefined}>
+          <div className="merge-section-row">
+            <span className="merge-section-label">내 스킨</span>
+            <button className="mc-btn merge-upload-btn" onClick={() => inputARef.current?.click()}>
+              {skinA ? '변경' : '불러오기'}
+            </button>
+            <input ref={inputARef} type="file" accept=".png" style={{ display: 'none' }}
+              onChange={(e) => { const f=e.target.files?.[0]; if(f){loadSkinFile(f,setSkinA);setSelA(null)} e.target.value='' }} />
+          </div>
           <MiniCanvas skinCanvas={skinA} selection={selA} onSelectionChange={updateSelA}
-            c1="rgba(80,150,255,0.95)" activeTool={mergeActiveTool} selMode={selMode} contiguous={contiguous} readOnly />
-          <button className="mc-btn merge-upload-btn" onClick={() => inputARef.current?.click()}>
-            {skinA ? '변경' : '불러오기'}
-          </button>
-          <input ref={inputARef} type="file" accept=".png" style={{ display: 'none' }}
-            onChange={(e) => { const f=e.target.files?.[0]; if(f){loadSkinFile(f,setSkinA);setSelA(null)} e.target.value='' }} />
+            activeTool={mergeActiveTool} selMode={selMode} contiguous={contiguous} readOnly />
         </div>
 
         <div className="merge-resize-v" onMouseDown={handleABResizeStart} />
 
         <div className="merge-half" style={{ flex: 100 - abSplit }}>
-          <span className="merge-section-label">
-            <span className="merge-dot-b">●</span> 입힐 스킨 <span style={{ opacity: 0.4 }}>(선택 영역 덮어씀)</span>
-          </span>
+          <div className="merge-section-row">
+            <span className="merge-section-label">입힐 스킨</span>
+            <button className="mc-btn merge-upload-btn" onClick={() => inputBRef.current?.click()}>
+              {skinB ? '변경' : '불러오기'}
+            </button>
+            <input ref={inputBRef} type="file" accept=".png" style={{ display: 'none' }}
+              onChange={(e) => { const f=e.target.files?.[0]; if(f){loadSkinFile(f,setSkinB);setSelB(null)} e.target.value='' }} />
+          </div>
           <MiniCanvas skinCanvas={skinB} selection={selB} onSelectionChange={updateSelB}
-            c1="rgba(255,160,40,0.95)" activeTool={mergeActiveTool} selMode={selMode} contiguous={contiguous} />
-          <button className="mc-btn merge-upload-btn" onClick={() => inputBRef.current?.click()}>
-            {skinB ? '변경' : '불러오기'}
-          </button>
-          <input ref={inputBRef} type="file" accept=".png" style={{ display: 'none' }}
-            onChange={(e) => { const f=e.target.files?.[0]; if(f){loadSkinFile(f,setSkinB);setSelB(null)} e.target.value='' }} />
+            activeTool={mergeActiveTool} selMode={selMode} contiguous={contiguous} />
         </div>
       </div>
 
+      {toast && <div className="merge-toast">입힐 스킨을 불러오세요</div>}
       <div className="merge-footer">
         <button className="mc-btn primary" onClick={handleApply} disabled={!merged || !selB || selB.size === 0}>
           입히기

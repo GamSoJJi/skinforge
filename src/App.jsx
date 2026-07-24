@@ -407,7 +407,10 @@ export default function App() {
   const effectiveSelMode = shiftHeld ? 'union' : altHeld ? 'diff' : selMode
   const handleToolChange = useCallback((toolId) => {
     if (toolId === 'merge') {
-      setMergeOpen(v => !v)
+      setMergeOpen(v => {
+        if (!v) setActiveTool('rect-select')
+        return !v
+      })
     } else {
       setActiveTool(toolId)
     }
@@ -415,7 +418,7 @@ export default function App() {
 
   const showBrushOpts = !mergeOpen && (activeTool === 'pen' || activeTool === 'eraser')
   const showSelOpts = activeTool === 'rect-select' || activeTool === 'magic-wand'
-  const showColorReplaceOpts = activeTool === 'color-replace'
+  const showColorReplaceOpts = !mergeOpen && activeTool === 'color-replace'
   const hasSelectionActive = mergeOpen ? mergeHasSel : selection !== null
 
   return (
@@ -463,20 +466,35 @@ export default function App() {
             {colorReplaceMode === 'shade' && (
               <>
                 <div className="opt-divider" />
-                <span className="opt-label">색조 H</span>
-                <span className="opt-shade-val">−{shadeToleranceMinus}°</span>
+                <span className="opt-label">색조</span>
+                <span className="opt-shade-prefix">−</span>
+                <input type="number" min={0} max={90}
+                  value={shadeToleranceMinus}
+                  onChange={e => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setShadeToleranceMinus(Math.max(0, Math.min(90, v))) }}
+                  onBlur={() => setShadeToleranceMinus(v => Math.max(0, Math.min(90, v)))}
+                  className="mc-input opt-shade-num" />
                 <input type="range" min={0} max={90} step={5}
                   value={shadeToleranceMinus}
                   onChange={e => setShadeToleranceMinus(Number(e.target.value))}
                   className="opt-shade-slider" />
-                <span className="opt-shade-val">+{shadeTolerancePlus}°</span>
+                <span className="opt-shade-prefix" style={{ marginLeft: '6px' }}>+</span>
+                <input type="number" min={0} max={90}
+                  value={shadeTolerancePlus}
+                  onChange={e => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setShadeTolerancePlus(Math.max(0, Math.min(90, v))) }}
+                  onBlur={() => setShadeTolerancePlus(v => Math.max(0, Math.min(90, v)))}
+                  className="mc-input opt-shade-num" />
                 <input type="range" min={0} max={90} step={5}
                   value={shadeTolerancePlus}
                   onChange={e => setShadeTolerancePlus(Number(e.target.value))}
                   className="opt-shade-slider" />
                 <div className="opt-divider" />
-                <span className="opt-label">명도 L</span>
-                <span className="opt-shade-val">±{shadeLTolerance}%</span>
+                <span className="opt-label">명도</span>
+                <span className="opt-shade-prefix">±</span>
+                <input type="number" min={0} max={50}
+                  value={shadeLTolerance}
+                  onChange={e => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setShadeLTolerance(Math.max(0, Math.min(50, v))) }}
+                  onBlur={() => setShadeLTolerance(v => Math.max(0, Math.min(50, v)))}
+                  className="mc-input opt-shade-num" />
                 <input type="range" min={0} max={50} step={1}
                   value={shadeLTolerance}
                   onChange={e => setShadeLTolerance(Number(e.target.value))}
@@ -538,10 +556,12 @@ export default function App() {
             <Redo2 size={14} strokeWidth={2} />
           </button>
           <div className="opt-divider" />
-          <button className="mc-btn opt-btn" onClick={() => fileInputRef.current?.click()} title="불러오기">
+          <button className="mc-btn opt-btn" onClick={() => fileInputRef.current?.click()}
+            onMouseEnter={(e) => showOptTip(e, '불러오기')} onMouseLeave={hideOptTip}>
             <FolderOpen size={14} strokeWidth={2} />
           </button>
-          <button className="mc-btn opt-btn" onClick={handleDownload} title="내보내기">
+          <button className="mc-btn opt-btn" onClick={handleDownload}
+            onMouseEnter={(e) => showOptTip(e, '내보내기')} onMouseLeave={hideOptTip}>
             <Download size={14} strokeWidth={2} />
           </button>
           <input ref={fileInputRef} type="file" accept=".png" style={{ display: 'none' }} onChange={handleUpload} />
@@ -619,7 +639,7 @@ export default function App() {
 
         {/* Right panel: 3D viewer + color */}
         <div className="ps-right-panel" style={{ width: rightWidth }}>
-          <div className="ps-panel-section-header">뷰어</div>
+          <div className="ps-panel-section-header">Viewer</div>
           <div className="ps-viewer" style={{ height: viewerH }}>
             <SkinViewer3D
               skinCanvas={mergeOpen && mergedPreview ? mergedPreview : skinCanvas}
@@ -627,7 +647,7 @@ export default function App() {
             />
           </div>
           <div className="ps-panel-resize" onMouseDown={handleViewerHResizeStart} />
-          <div className="ps-panel-section-header">색상</div>
+          <div className="ps-panel-section-header">Color</div>
           <div className="ps-color-scroll">
             <ColorPanel
               color={activeColor}

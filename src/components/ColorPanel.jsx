@@ -45,8 +45,6 @@ export default function ColorPanel({
 
   return (
     <div className="color-panel">
-      <div className="panel-label">색상</div>
-
       <div className="current-color-row">
         <div
           className="current-swatch mc-slot"
