@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { getSkinLayout } from '../utils/skinLayout'
+import { useLang } from '../i18n/LangContext.jsx'
 
 const SCALE = 16
 const SIZE = 64 * SCALE   // 1024 — 2× per-axis resolution for crisp rendering
@@ -141,6 +142,7 @@ export default function PixelEditor({
   modalPickingSlot, onModalColorPick,
   shadePreview,
 }) {
+  const { lang } = useLang()
   const canvasRef = useRef(null)
   const guideCanvasRef = useRef(null)
   const overlayRef = useRef(null)
@@ -206,7 +208,7 @@ export default function PixelEditor({
     if (!guide) return
     const ctx = guide.getContext('2d')
     ctx.clearRect(0, 0, SIZE, SIZE)
-    const { parts } = getSkinLayout(skinType === 'slim')
+    const { parts } = getSkinLayout(skinType === 'slim', lang)
     for (const part of parts) {
       if (part.unused) continue
       ctx.fillStyle = showGuide
@@ -214,7 +216,7 @@ export default function PixelEditor({
         : part.color.replace(/[\d.]+\)$/, m => (parseFloat(m) * 0.35).toFixed(3) + ')')
       ctx.fillRect(part.x * SCALE, part.y * SCALE, part.w * SCALE, part.h * SCALE)
     }
-  }, [skinType, showGuide])
+  }, [skinType, showGuide, lang])
 
   // 스킨 위 레이어: 그리드 + 테두리 + 레이블
   const redrawOverlay = useCallback(() => {
@@ -239,7 +241,7 @@ export default function PixelEditor({
 
     if (!showGuide) return
 
-    const { parts, labels } = getSkinLayout(skinType === 'slim')
+    const { parts, labels } = getSkinLayout(skinType === 'slim', lang)
 
     // Part borders
     ctx.lineWidth = thin * 1.5
@@ -259,7 +261,7 @@ export default function PixelEditor({
       ctx.fillStyle = label.color
       ctx.fillText(label.name, label.x * SCALE + thin * 2, label.y * SCALE + thin * 2)
     }
-  }, [skinType, showGuide])
+  }, [skinType, showGuide, lang])
 
   const redrawSkin = useCallback(() => {
     const canvas = canvasRef.current

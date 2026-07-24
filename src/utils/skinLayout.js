@@ -139,34 +139,49 @@ const SLIM_ARM_PARTS = [
   { x: 59, y: 52, w: 3,  h: 12, color: 'rgba(180,0,255,0.1)' },
 ]
 
-const SHARED_LABELS = [
-  { name: '머리',    x: 8,  y: 8,  color: '#c8a000' },
-  { name: '모자',    x: 40, y: 8,  color: '#c87800' },
-  { name: '몸통',    x: 20, y: 20, color: '#009650' },
-  { name: '우다리',  x: 4,  y: 20, color: '#c83232' },
-  { name: '좌다리',  x: 20, y: 52, color: '#c85000' },
-  { name: '재킷',    x: 20, y: 36, color: '#009650' },
-  { name: '우다리2', x: 4,  y: 36, color: '#c83232' },
-  { name: '좌다리2', x: 4,  y: 52, color: '#c85000' },
-]
+const LABEL_NAMES = {
+  ko: {
+    head: '머리', hat: '모자', body: '몸통',
+    rLeg: '우다리', lLeg: '좌다리', jacket: '재킷',
+    rLegOuter: '우다리 겉면', lLegOuter: '좌다리 겉면',
+    rArm: '우팔', lArm: '좌팔',
+    rArmOuter: '우팔 겉면', lArmOuter: '좌팔 겉면',
+  },
+  en: {
+    head: 'Head', hat: 'Hat', body: 'Body',
+    rLeg: 'R.Leg', lLeg: 'L.Leg', jacket: 'Jacket',
+    rLegOuter: 'R.Leg Out', lLegOuter: 'L.Leg Out',
+    rArm: 'R.Arm', lArm: 'L.Arm',
+    rArmOuter: 'R.Arm Out', lArmOuter: 'L.Arm Out',
+  },
+}
 
-const NORMAL_ARM_LABELS = [
-  { name: '우팔',      x: 44, y: 20, color: '#2050d0' },
-  { name: '좌팔',      x: 36, y: 52, color: '#8000c0' },
-  { name: '우팔 겉면', x: 44, y: 36, color: '#2050d0' },
-  { name: '좌팔 겉면', x: 52, y: 52, color: '#8000c0' },
-]
+function makeLabels(n) {
+  return {
+    shared: [
+      { key: 'head',       x: 8,  y: 8,  color: '#c8a000' },
+      { key: 'hat',        x: 40, y: 8,  color: '#c87800' },
+      { key: 'body',       x: 20, y: 20, color: '#009650' },
+      { key: 'rLeg',       x: 4,  y: 20, color: '#c83232' },
+      { key: 'lLeg',       x: 20, y: 52, color: '#c85000' },
+      { key: 'jacket',     x: 20, y: 36, color: '#009650' },
+      { key: 'rLegOuter',  x: 4,  y: 36, color: '#c83232' },
+      { key: 'lLegOuter',  x: 4,  y: 52, color: '#c85000' },
+    ].map(l => ({ ...l, name: n[l.key] })),
+    arm: [
+      { key: 'rArm',      x: 44, y: 20, color: '#2050d0' },
+      { key: 'lArm',      x: 36, y: 52, color: '#8000c0' },
+      { key: 'rArmOuter', x: 44, y: 36, color: '#2050d0' },
+      { key: 'lArmOuter', x: 52, y: 52, color: '#8000c0' },
+    ].map(l => ({ ...l, name: n[l.key] })),
+  }
+}
 
-const SLIM_ARM_LABELS = [
-  { name: '우팔',      x: 44, y: 20, color: '#2050d0' },
-  { name: '좌팔',      x: 36, y: 52, color: '#8000c0' },
-  { name: '우팔 겉면', x: 44, y: 36, color: '#2050d0' },
-  { name: '좌팔 겉면', x: 52, y: 52, color: '#8000c0' },
-]
-
-export function getSkinLayout(slim = false) {
+export function getSkinLayout(slim = false, lang = 'ko') {
+  const n = LABEL_NAMES[lang] ?? LABEL_NAMES.ko
+  const { shared, arm } = makeLabels(n)
   return {
     parts: [...SHARED_PARTS, ...(slim ? SLIM_ARM_PARTS : NORMAL_ARM_PARTS)],
-    labels: [...SHARED_LABELS, ...(slim ? SLIM_ARM_LABELS : NORMAL_ARM_LABELS)],
+    labels: [...shared, ...arm],
   }
 }
