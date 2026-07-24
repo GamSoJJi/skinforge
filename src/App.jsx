@@ -6,6 +6,7 @@ import ToolPanel from './components/ToolPanel'
 import ColorPanel from './components/ColorPanel'
 import SkinMergeModal from './components/SkinMergeModal'
 import TipBanner from './components/TipBanner'
+import { inferModelType } from 'skinview-utils'
 import { useLang } from './i18n/LangContext.jsx'
 import './App.css'
 
@@ -246,6 +247,7 @@ export default function App() {
         redoStack.current = []
         setSkinVersion((v) => v + 1)
         setUploadCount((c) => c + 1)
+        setSkinType(inferModelType(skinCanvas) === 'slim' ? 'slim' : 'normal')
       }
       img.src = evt.target.result
     }
