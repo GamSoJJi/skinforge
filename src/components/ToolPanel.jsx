@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
-import { Pencil, Eraser, PaintBucket, Pipette, Replace, SquareDashed, Wand2 } from 'lucide-react'
+import { Pencil, Eraser, PaintBucket, Pipette, Replace, SquareDashed, Wand2, Shirt } from 'lucide-react'
 
-const MERGE_TOOLS = new Set(['rect-select', 'magic-wand'])
+const MERGE_TOOLS = new Set(['rect-select', 'magic-wand', 'merge'])
 
 const ICON_PROPS = { size: 18, strokeWidth: 2 }
 
@@ -14,6 +14,8 @@ const TOOLS = [
   null,
   { id: 'rect-select',   label: '사각선택', icon: <SquareDashed {...ICON_PROPS} />,   shortcut: 'M' },
   { id: 'magic-wand',    label: '마법봉',   icon: <Wand2 {...ICON_PROPS} />,          shortcut: 'W' },
+  null,
+  { id: 'merge',         label: '옷입히기', icon: <Shirt {...ICON_PROPS} />,          shortcut: null },
 ]
 
 export default function ToolPanel({ activeTool, onToolChange, mergeMode, pickingActive }) {
@@ -33,7 +35,9 @@ export default function ToolPanel({ activeTool, onToolChange, mergeMode, picking
           : (
             <button
               key={tool.id}
-              className={`toolbar-btn${activeTool === tool.id && !(mergeMode && !MERGE_TOOLS.has(tool.id)) && !pickingActive ? ' active' : ''}`}
+              className={`toolbar-btn${
+                (tool.id === 'merge' ? mergeMode : activeTool === tool.id && !(mergeMode && !MERGE_TOOLS.has(tool.id)) && !pickingActive)
+                  ? ' active' : ''}`}
               disabled={(mergeMode && !MERGE_TOOLS.has(tool.id)) || pickingActive}
               onClick={() => onToolChange(tool.id)}
               onMouseEnter={(e) => showTip(e, tool.shortcut ? `${tool.label}  ${tool.shortcut}` : tool.label)}

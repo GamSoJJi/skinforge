@@ -193,8 +193,14 @@ export default function App() {
       if (e.code === 'KeyR') setActiveTool('color-replace')
       if (e.code === 'KeyM') setActiveTool('rect-select')
       if (e.code === 'KeyW') setActiveTool('magic-wand')
-      if (e.code === 'BracketLeft')  setBrushSize((s) => Math.max(1, s - 1))
-      if (e.code === 'BracketRight') setBrushSize((s) => Math.min(16, s + 1))
+      if (e.code === 'BracketLeft' || e.code === 'BracketRight') {
+        const t = activeToolRef.current
+        const dec = e.code === 'BracketLeft'
+        if (t === 'pen' || t === 'eraser')
+          setBrushSize((s) => Math.max(1, Math.min(16, s + (dec ? -1 : 1))))
+        else if (t === 'magic-wand')
+          setWandTolerance((s) => Math.max(0, Math.min(255, s + (dec ? -5 : 5))))
+      }
     }
     const onKeyUp = (e) => {
       if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') setShiftHeld(false)
@@ -408,6 +414,14 @@ export default function App() {
   }, [])
 
   const effectiveSelMode = shiftHeld ? 'union' : altHeld ? 'diff' : selMode
+  const handleToolChange = useCallback((toolId) => {
+    if (toolId === 'merge') {
+      setMergeOpen(v => !v)
+    } else {
+      setActiveTool(toolId)
+    }
+  }, [])
+
   const showBrushOpts = !mergeOpen && (activeTool === 'pen' || activeTool === 'eraser')
   const showSelOpts = activeTool === 'rect-select' || activeTool === 'magic-wand'
   const showColorReplaceOpts = activeTool === 'color-replace'
@@ -430,8 +444,6 @@ export default function App() {
                   <input ref={fileInputRef} type="file" accept=".png" style={{ display: 'none' }} onChange={handleUpload} />
                 </label>
                 <button className="mc-dropdown-item" onClick={() => { handleDownload(); setFileMenuOpen(false) }}>내보내기</button>
-                <div className="mc-dropdown-sep" />
-                <button className="mc-dropdown-item" onClick={() => { setMergeOpen(true); setFileMenuOpen(false) }}>옷입히기</button>
               </div>
             )}
           </div>
@@ -534,6 +546,8 @@ export default function App() {
                 }}>선택해제</button>
               </>
             )}
+            <div className="opt-divider" />
+            <span className="opt-hint"><kbd>ESC</kbd> 선택 해제</span>
           </div>
         )}
       </div>
@@ -544,7 +558,7 @@ export default function App() {
         {/* Left vertical toolbar */}
         <ToolPanel
           activeTool={activeTool}
-          onToolChange={setActiveTool}
+          onToolChange={handleToolChange}
           mergeMode={mergeOpen}
           pickingActive={false}
         />

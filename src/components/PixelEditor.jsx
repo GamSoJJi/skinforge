@@ -182,20 +182,22 @@ export default function PixelEditor({
   }, [])
 
   useEffect(() => {
-    const scrollEl = scrollRef.current
-    if (!scrollEl) return
-    const fitZoom = Math.min(
-      (scrollEl.clientWidth - 40) / SIZE,
-      (scrollEl.clientHeight - 40) / SIZE
-    )
-    const clamped = Math.max(0.25, Math.min(32, fitZoom))
-    setZoom(clamped)
-    // Center the canvas inside the padded scroll area after DOM updates
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      const total = SIZE * clamped + 2 * PAD
-      scrollEl.scrollLeft = Math.max(0, (total - scrollEl.clientWidth)  / 2)
-      scrollEl.scrollTop  = Math.max(0, (total - scrollEl.clientHeight) / 2)
-    }))
+    requestAnimationFrame(() => {
+      const scrollEl = scrollRef.current
+      if (!scrollEl) return
+      const fitZoom = Math.min(
+        (scrollEl.clientWidth - 8) / SIZE,
+        (scrollEl.clientHeight - 8) / SIZE
+      )
+      const clamped = Math.max(0.25, Math.min(32, fitZoom))
+      setZoom(clamped)
+      requestAnimationFrame(() => {
+        if (!scrollRef.current) return
+        const total = SIZE * clamped + 2 * PAD
+        scrollRef.current.scrollLeft = Math.max(0, (total - scrollRef.current.clientWidth)  / 2)
+        scrollRef.current.scrollTop  = Math.max(0, (total - scrollRef.current.clientHeight) / 2)
+      })
+    })
   }, [])
 
   // 스킨 아래 레이어: 실루엣 fills만 (색감에 영향 없도록 skin 픽셀 아래)
@@ -373,7 +375,7 @@ export default function PixelEditor({
     let running = true
     const tick = () => {
       if (!running) return
-      dashOffsetRef.current = (dashOffsetRef.current + 0.35 * (SCALE / 8)) % (ANT_DASH * 2)
+      dashOffsetRef.current = (dashOffsetRef.current + 0.12 * (SCALE / 8)) % (ANT_DASH * 2)
       drawSelectionOverlay(selection, shadePreview)
       selAnimRef.current = requestAnimationFrame(tick)
     }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { ArrowLeft } from 'lucide-react'
 
 const MS = 3           // mini scale (pixel per skin-pixel)
 const MINI = 64 * MS   // 192
@@ -33,7 +34,7 @@ function drawStaticSel(ctx, sel, scale, color) {
 }
 
 function drawGrid(ctx, size, scale) {
-  ctx.strokeStyle = 'rgba(255,255,255,0.07)'
+  ctx.strokeStyle = 'rgba(120,110,160,0.18)'
   ctx.lineWidth = 0.5
   for (let i = 0; i <= 8; i++) {
     const p = i * 8 * scale
@@ -82,10 +83,21 @@ function loadSkinFile(file, onLoad) {
 
 // ── Custom hook: scroll-zoom + middle-button pan ─────────────────────────────
 
-function useZoomPan(scrollRef) {
+function useZoomPan(scrollRef, contentSize) {
   const [zoom, setZoom_] = useState(1)
   const zoomRef = useRef(1)
   const setZoom = useCallback((v) => { zoomRef.current = v; setZoom_(v) }, [])
+
+  useEffect(() => {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const el = scrollRef.current; if (!el) return
+      const fit = Math.min(
+        (el.clientWidth  - 4) / contentSize,
+        (el.clientHeight - 4) / contentSize
+      )
+      setZoom(Math.max(1, fit))
+    }))
+  }, []) // eslint-disable-line
 
   const handleWheel = useCallback((e) => {
     e.preventDefault()
@@ -135,7 +147,7 @@ function useZoomPan(scrollRef) {
 
 // ── MiniCanvas ───────────────────────────────────────────────────────────────
 
-function MiniCanvas({ skinCanvas, selection, onSelectionChange, c1, activeTool, selMode, contiguous }) {
+function MiniCanvas({ skinCanvas, selection, onSelectionChange, c1, activeTool, selMode, contiguous, readOnly = false }) {
   const scrollRef = useRef(null)
   const skinRef   = useRef(null)
   const selRef    = useRef(null)
@@ -149,14 +161,14 @@ function MiniCanvas({ skinCanvas, selection, onSelectionChange, c1, activeTool, 
   const contiguousRef = useRef(contiguous)
   contiguousRef.current = contiguous
 
-  const zoom = useZoomPan(scrollRef)
+  const zoom = useZoomPan(scrollRef, MINI)
 
   useEffect(() => {
     const cv = skinRef.current; if (!cv) return
     const ctx = cv.getContext('2d')
     ctx.clearRect(0, 0, MINI, MINI)
     if (!skinCanvas) {
-      ctx.fillStyle = '#1a1a1a'; ctx.fillRect(0, 0, MINI, MINI)
+      // transparent — CSS background shows through
     } else {
       ctx.imageSmoothingEnabled = false
       ctx.drawImage(skinCanvas, 0, 0, MINI, MINI)
@@ -254,7 +266,7 @@ function MiniCanvas({ skinCanvas, selection, onSelectionChange, c1, activeTool, 
     dragStart.current = null; isDragging.current = false
   }, [c1])
 
-  const cursor = !skinCanvas ? 'default' : activeTool === 'wand' ? 'cell' : 'crosshair'
+  const cursor = readOnly ? 'not-allowed' : !skinCanvas ? 'default' : activeTool === 'wand' ? 'cell' : 'crosshair'
 
   return (
     <div ref={scrollRef} className="merge-canvas-scroll">
@@ -265,11 +277,11 @@ function MiniCanvas({ skinCanvas, selection, onSelectionChange, c1, activeTool, 
               style={{ position: 'absolute', top: 0, left: 0, imageRendering: 'pixelated' }} />
             <canvas ref={selRef} width={MINI} height={MINI}
               style={{ position: 'absolute', top: 0, left: 0, cursor }}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseLeave}
-              onContextMenu={(e) => e.preventDefault()}
+              onMouseDown={readOnly ? undefined : handleMouseDown}
+              onMouseMove={readOnly ? undefined : handleMouseMove}
+              onMouseUp={readOnly ? undefined : handleMouseUp}
+              onMouseLeave={readOnly ? undefined : handleMouseLeave}
+              onContextMenu={readOnly ? undefined : (e) => e.preventDefault()}
             />
           </div>
         </div>
@@ -283,14 +295,14 @@ function MiniCanvas({ skinCanvas, selection, onSelectionChange, c1, activeTool, 
 function ResultCanvas({ merged }) {
   const scrollRef = useRef(null)
   const canvasRef = useRef(null)
-  const zoom = useZoomPan(scrollRef)
+  const zoom = useZoomPan(scrollRef, RESULT)
 
   useEffect(() => {
     const cv = canvasRef.current; if (!cv) return
     const ctx = cv.getContext('2d')
     ctx.clearRect(0, 0, RESULT, RESULT)
     if (!merged) {
-      ctx.fillStyle = '#111'; ctx.fillRect(0, 0, RESULT, RESULT)
+      // transparent — CSS background shows through
     } else {
       ctx.imageSmoothingEnabled = false
       ctx.drawImage(merged, 0, 0, RESULT, RESULT)
@@ -328,9 +340,9 @@ export default function SkinMergeModal({ onClose, onMerge, initialSkinA, activeT
   const mergeViewRef  = useRef(null)
   const mergeBottomRef = useRef(null)
 
-  const [tbSplit, setTbSplit_] = useState(60)
+  const [tbSplit, setTbSplit_] = useState(50)
   const [abSplit, setAbSplit_] = useState(50)
-  const tbSplitRef = useRef(60)
+  const tbSplitRef = useRef(50)
   const abSplitRef = useRef(50)
   const setTbSplit = useCallback((v) => { tbSplitRef.current = v; setTbSplit_(v) }, [])
   const setAbSplit = useCallback((v) => { abSplitRef.current = v; setAbSplit_(v) }, [])
@@ -452,7 +464,9 @@ export default function SkinMergeModal({ onClose, onMerge, initialSkinA, activeT
   return (
     <div className="merge-view" ref={mergeViewRef}>
       <div className="merge-bar">
-        <button className="mc-btn merge-back-btn" onClick={onClose}>← 에디터로</button>
+        <button className="mc-btn merge-back-btn" onClick={onClose} title="에디터로">
+          <ArrowLeft size={16} strokeWidth={2} />
+        </button>
         <span className="merge-bar-title">옷입히기</span>
         <div className="merge-mode-hints">
           <span><kbd>우클릭</kbd> 선택 초기화</span>
@@ -461,7 +475,10 @@ export default function SkinMergeModal({ onClose, onMerge, initialSkinA, activeT
 
       <div className="merge-top" style={{ flex: tbSplit }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, width: '100%', height: '100%' }}>
-          <span className="merge-section-label">결과 미리보기</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <span className="merge-section-label">결과</span>
+            {hint && <span className="merge-hint-inline">{hint}</span>}
+          </div>
           <ResultCanvas merged={merged} />
         </div>
       </div>
@@ -474,7 +491,7 @@ export default function SkinMergeModal({ onClose, onMerge, initialSkinA, activeT
             <span className="merge-dot-a">●</span> 내 스킨 <span style={{ opacity: 0.4 }}>(베이스)</span>
           </span>
           <MiniCanvas skinCanvas={skinA} selection={selA} onSelectionChange={updateSelA}
-            c1="rgba(80,150,255,0.95)" activeTool={mergeActiveTool} selMode={selMode} contiguous={contiguous} />
+            c1="rgba(80,150,255,0.95)" activeTool={mergeActiveTool} selMode={selMode} contiguous={contiguous} readOnly />
           <button className="mc-btn merge-upload-btn" onClick={() => inputARef.current?.click()}>
             {skinA ? '변경' : '불러오기'}
           </button>
@@ -499,7 +516,6 @@ export default function SkinMergeModal({ onClose, onMerge, initialSkinA, activeT
       </div>
 
       <div className="merge-footer">
-        <span className="merge-hint">{hint}</span>
         <button className="mc-btn primary" onClick={handleApply} disabled={!merged || !selB || selB.size === 0}>
           입히기
         </button>
