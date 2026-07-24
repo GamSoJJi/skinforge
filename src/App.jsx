@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect, useRef } from 'react'
-import { Sun, Moon, Square, Circle } from 'lucide-react'
+import { Sun, Moon, Square, Circle, FolderOpen, Download, Undo2, Redo2 } from 'lucide-react'
 import SkinViewer3D from './components/SkinViewer3D'
 import PixelEditor from './components/PixelEditor'
 import ToolPanel from './components/ToolPanel'
@@ -73,7 +73,6 @@ export default function App() {
   const [altHeld, setAltHeld] = useState(false)
   const [uploadCount, setUploadCount] = useState(0)
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark')
-  const [fileMenuOpen, setFileMenuOpen] = useState(false)
   const [mergeOpen, setMergeOpen] = useState(false)
   const [mergedPreview, setMergedPreview] = useState(null)
   const [mergeVersion, setMergeVersion] = useState(0)
@@ -83,7 +82,6 @@ export default function App() {
     () => DEFAULT_PALETTE.map(c => ({ color: c, pinned: false }))
   )
 
-  const fileMenuRef = useRef(null)
   const fileInputRef = useRef(null)
   const activeColorRef = useRef(activeColor)
   const activeToolRef = useRef(activeTool)
@@ -95,13 +93,6 @@ export default function App() {
     localStorage.setItem('theme', darkMode ? 'dark' : 'light')
   }, [darkMode])
 
-  useEffect(() => {
-    const handleClick = (e) => {
-      if (fileMenuRef.current && !fileMenuRef.current.contains(e.target)) setFileMenuOpen(false)
-    }
-    if (fileMenuOpen) document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [fileMenuOpen])
 
   const addToHistory = useCallback((newColor) => {
     if (!newColor || newColor.length !== 7) return
@@ -435,19 +426,6 @@ export default function App() {
       <header className="ps-menubar">
         <img src="/favicon-32.png" alt="logo" className="mc-logo" />
         <h1 className="mc-title">SkinForge</h1>
-        <nav className="mc-nav">
-          <div className="mc-menu-item" ref={fileMenuRef}>
-            <button className={`mc-menu-btn${fileMenuOpen ? ' active' : ''}`} onClick={() => setFileMenuOpen(v => !v)}>파일</button>
-            {fileMenuOpen && (
-              <div className="mc-dropdown">
-                <label className="mc-dropdown-item">불러오기
-                  <input ref={fileInputRef} type="file" accept=".png" style={{ display: 'none' }} onChange={handleUpload} />
-                </label>
-                <button className="mc-dropdown-item" onClick={() => { handleDownload(); setFileMenuOpen(false) }}>내보내기</button>
-              </div>
-            )}
-          </div>
-        </nav>
         <button className="theme-btn" onClick={() => setDarkMode(v => !v)} title={darkMode ? '라이트 모드' : '다크 모드'}>
           {darkMode ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
         </button>
@@ -550,6 +528,24 @@ export default function App() {
             <span className="opt-hint"><kbd>ESC</kbd> 선택 해제</span>
           </div>
         )}
+        <div className="opt-file-actions">
+          <button className="mc-btn opt-btn" onClick={undo} disabled={!canUndo}
+            onMouseEnter={(e) => showOptTip(e, `뒤로가기  ${MOD}Z`)} onMouseLeave={hideOptTip}>
+            <Undo2 size={14} strokeWidth={2} />
+          </button>
+          <button className="mc-btn opt-btn" onClick={redo} disabled={!canRedo}
+            onMouseEnter={(e) => showOptTip(e, `앞으로가기  ${REDO_KEY}`)} onMouseLeave={hideOptTip}>
+            <Redo2 size={14} strokeWidth={2} />
+          </button>
+          <div className="opt-divider" />
+          <button className="mc-btn opt-btn" onClick={() => fileInputRef.current?.click()} title="불러오기">
+            <FolderOpen size={14} strokeWidth={2} />
+          </button>
+          <button className="mc-btn opt-btn" onClick={handleDownload} title="내보내기">
+            <Download size={14} strokeWidth={2} />
+          </button>
+          <input ref={fileInputRef} type="file" accept=".png" style={{ display: 'none' }} onChange={handleUpload} />
+        </div>
       </div>
 
       {/* ── Main Workspace ── */}
@@ -615,11 +611,6 @@ export default function App() {
               <span className="toggle-track"><span className="toggle-thumb" /></span>
             </label>
             <span className={`opt-label${skinType === 'slim' ? ' active' : ''}`}>슬림</span>
-            <div className="opt-divider" />
-            <button className="mc-btn opt-btn" onClick={undo} disabled={!canUndo}
-              onMouseEnter={(e) => showBarTip(e, `뒤로가기  ${MOD}Z`)} onMouseLeave={hideOptTip}>↩</button>
-            <button className="mc-btn opt-btn" onClick={redo} disabled={!canRedo}
-              onMouseEnter={(e) => showBarTip(e, `앞으로가기  ${REDO_KEY}`)} onMouseLeave={hideOptTip}>↪</button>
           </div>
         </div>
 

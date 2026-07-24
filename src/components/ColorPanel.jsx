@@ -45,14 +45,14 @@ export default function ColorPanel({
 
   return (
     <div className="color-panel">
-      <div className="panel-label">Color</div>
+      <div className="panel-label">색상</div>
 
       <div className="current-color-row">
         <div
           className="current-swatch mc-slot"
           style={{ background: color }}
           onClick={() => setShowPicker((v) => !v)}
-          title="Click to open picker"
+          title="색상 선택기 열기"
         />
         <input
           className="mc-input hex-input"
@@ -80,7 +80,7 @@ export default function ColorPanel({
         <button
           className={`mc-btn tab-btn ${paletteMode === 'skin' ? 'active' : ''}`}
           onClick={() => setPaletteMode('skin')}
-        >Skin</button>
+        >스킨</button>
       </div>
 
       <div className="palette-grid">

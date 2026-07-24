@@ -150,11 +150,11 @@ body { margin: 0; background: var(--bg); font-family: var(--font-body); color: v
 }
 
 .mc-title {
-  font-size: var(--text-sm);
+  font-size: var(--text-lg);
   font-family: var(--font-display);
   font-weight: 400;
   color: var(--accent);
-  letter-spacing: 2px;
+  letter-spacing: 0.5px;
   margin-right: 8px;
 }
 
@@ -223,6 +223,13 @@ body { margin: 0; background: var(--bg); font-family: var(--font-body); color: v
   flex-shrink: 0;
   gap: 6px;
   overflow: hidden;
+}
+.opt-file-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
 }
 
 .opt-group {
@@ -447,8 +454,7 @@ body.resizing-viewer { cursor: col-resize !important; user-select: none; }
   font-family: var(--font-display);
   font-weight: 400;
   color: var(--text-dim);
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  letter-spacing: 0;
   padding: 5px 10px 4px;
   background: var(--surface-0);
   border-bottom: 1px solid var(--border);
@@ -620,6 +626,9 @@ body.resizing-row { cursor: row-resize !important; user-select: none; }
 .current-color-row { display: flex; align-items: center; gap: 6px; }
 
 .mc-slot {
+  box-shadow: inset 1px 1px 0 rgba(0,0,0,0.15), inset -1px -1px 0 rgba(255,255,255,0.05);
+}
+[data-theme="dark"] .mc-slot {
   box-shadow: inset 1px 1px 0 rgba(0,0,0,0.5), inset -1px -1px 0 rgba(255,255,255,0.05);
 }
 
@@ -658,7 +667,7 @@ body.resizing-row { cursor: row-resize !important; user-select: none; }
 .palette-swatch {
   aspect-ratio: 1;
   cursor: pointer;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border);
   position: relative;
 }
 .palette-swatch:hover { outline: 2px solid var(--accent); outline-offset: 1px; z-index: 1; }
@@ -861,7 +870,6 @@ body.picking-color { cursor: crosshair !important; }
   border-top: 1px solid var(--border);
   flex-shrink: 0;
 }
-.merge-hint { font-size: 0.62rem; color: var(--text-dim); flex: 1; }
 .merge-bar-guide {
   font-size: 0.62rem;
   color: var(--accent);
@@ -916,13 +924,14 @@ body.resizing-col { cursor: col-resize !important; user-select: none; }
   align-items: center;
   gap: 5px;
   padding: 4px 10px;
-  background: rgba(26, 20, 45, 0.82);
+  background: var(--surface-0);
   border: 1px solid var(--border);
   pointer-events: none;
   transition: opacity 0.35s ease;
   max-width: 280px;
   z-index: 10;
   border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
 }
 .tip-icon { font-size: 0.75rem; flex-shrink: 0; }
-.tip-text { font-size: 0.6rem; color: rgba(220,220,220,0.7); line-height: 1.4; }
+.tip-text { font-size: 0.6rem; color: var(--text-secondary); line-height: 1.4; }
