@@ -1,18 +1,61 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SkinForge</title>
+    <title>SkinForge — 마인크래프트 스킨 에디터</title>
+    <meta name="description" content="브라우저에서 바로 쓰는 마인크래프트 스킨 에디터. 브러쉬, 채우기, 색 교체, 옷입히기, 3D 미리보기까지 무료로 제공합니다." />
+    <meta property="og:type"        content="website" />
+    <meta property="og:title"       content="SkinForge — 마인크래프트 스킨 에디터" />
+    <meta property="og:description" content="브라우저에서 바로 쓰는 마인크래프트 스킨 에디터. 브러쉬, 채우기, 색 교체, 옷입히기, 3D 미리보기까지 무료로 제공합니다." />
+    <meta property="og:image"       content="/favicon-512.png" />
+    <meta name="twitter:card"        content="summary" />
+    <meta name="twitter:title"       content="SkinForge — 마인크래프트 스킨 에디터" />
+    <meta name="twitter:description" content="브라우저에서 바로 쓰는 마인크래프트 스킨 에디터." />
+    <meta name="twitter:image"       content="/favicon-512.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      #mobile-block {
+        display: none;
+        position: fixed; inset: 0;
+        background: #1a1726;
+        color: #e4dfff;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        text-align: center;
+        padding: 32px;
+        z-index: 99999;
+        font-family: 'Nunito', sans-serif;
+      }
+      #mobile-block h1 {
+        font-family: 'Silkscreen', monospace;
+        font-size: 24px;
+        color: #a8a9e8;
+        letter-spacing: 1px;
+      }
+      #mobile-block p { font-size: 16px; line-height: 1.6; }
+      #mobile-block .sub { font-size: 13px; color: #9b8ec4; margin-top: 4px; }
+      @media (max-width: 768px) {
+        #mobile-block { display: flex; }
+        #root { display: none; }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+    <div id="mobile-block">
+      <img src="/favicon-128.png" alt="SkinForge" width="64" />
+      <h1>SkinForge</h1>
+      <p>마인크래프트 스킨 에디터는<br>PC 브라우저에서 이용해주세요 🖥️</p>
+      <p class="sub">This editor requires a mouse and desktop browser.</p>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

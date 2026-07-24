@@ -1,6 +1,6 @@
-import { useCallback, useState, useEffect, useRef } from 'react'
+import { useCallback, useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { Sun, Moon, Square, Circle, FolderOpen, Download, Undo2, Redo2 } from 'lucide-react'
-import SkinViewer3D from './components/SkinViewer3D'
+const SkinViewer3D = lazy(() => import('./components/SkinViewer3D'))
 import PixelEditor from './components/PixelEditor'
 import ToolPanel from './components/ToolPanel'
 import ColorPanel from './components/ColorPanel'
@@ -357,10 +357,6 @@ export default function App() {
     const rect = e.currentTarget.getBoundingClientRect()
     setOptTip({ text, left: rect.left + rect.width / 2, top: rect.bottom + 6, above: false })
   }, [])
-  const showBarTip = useCallback((e, text) => {
-    const rect = e.currentTarget.getBoundingClientRect()
-    setOptTip({ text, left: rect.left + rect.width / 2, top: rect.top - 6, above: true })
-  }, [])
   const hideOptTip = useCallback(() => setOptTip(null), [])
 
   const [rightWidth, setRightWidth] = useState(240)
@@ -646,10 +642,12 @@ export default function App() {
         <div className="ps-right-panel" style={{ width: rightWidth }}>
           <div className="ps-panel-section-header">Viewer</div>
           <div className="ps-viewer" style={{ height: viewerH }}>
-            <SkinViewer3D
-              skinCanvas={mergeOpen && mergedPreview ? mergedPreview : skinCanvas}
-              skinVersion={mergeOpen ? mergeVersion : skinVersion}
-            />
+            <Suspense fallback={<div className="viewer-loading" />}>
+              <SkinViewer3D
+                skinCanvas={mergeOpen && mergedPreview ? mergedPreview : skinCanvas}
+                skinVersion={mergeOpen ? mergeVersion : skinVersion}
+              />
+            </Suspense>
           </div>
           <div className="ps-panel-resize" onMouseDown={handleViewerHResizeStart} />
           <div className="ps-panel-section-header">Color</div>

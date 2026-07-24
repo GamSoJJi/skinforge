@@ -506,6 +506,12 @@ body.resizing-viewer { cursor: col-resize !important; user-select: none; }
   overflow: hidden;
 }
 
+.viewer-loading {
+  width: 100%;
+  height: 100%;
+  background: var(--surface-viewer);
+}
+
 .ps-panel-resize {
   height: 4px;
   background: var(--border);

@@ -19,7 +19,7 @@ function extractColors(skinCanvas) {
 export default function ColorPanel({
   color, onChange,
   skinCanvas, skinVersion, uploadCount,
-  historyPalette, onHistoryAdd, onPinToggle,
+  historyPalette, onPinToggle,
 }) {
   const { t } = useLang()
   const [showPicker, setShowPicker] = useState(false)
