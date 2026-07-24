@@ -72,7 +72,7 @@
   --accent-hover:  var(--accent-solid-hover);
   --accent-dim:    var(--accent-tint);
   --accent-border: var(--accent-secondary-border);
-  --canvas-void:   var(--surface-viewer);
+  --canvas-void:   #BEBAD0;  /* muted lavender-grey void — light mode only */
   --canvas-alt:    #1F1B2A;
   --error:    var(--error-9);
   --error-dk: var(--error-11);
@@ -96,6 +96,7 @@
   --text-secondary: #9A90C0;
   --text-on-accent: #1A1726;
   --border: #332E55;
+  --canvas-void: var(--surface-viewer);  /* dark void in dark mode */
 }
 [data-theme="dark"] .opt-clear { background: #3A1F1F; }
 [data-theme="dark"] .opt-clear:hover { background: #4a2525; }
@@ -445,7 +446,7 @@ body.resizing-row { cursor: row-resize !important; user-select: none; }
 /* ═══════════════════════════════════════
    PIXEL EDITOR INTERNALS
 ═══════════════════════════════════════ */
-.pixel-editor-scroll { background: var(--surface-viewer); }
+.pixel-editor-scroll { background: var(--canvas-void); }
 .pixel-editor-wrap {
   border: 1px solid var(--border);
   image-rendering: pixelated;
