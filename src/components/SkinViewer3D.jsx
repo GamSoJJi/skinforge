@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import * as skinview3d from 'skinview3d'
 
-export default function SkinViewer3D({ skinCanvas, skinVersion }) {
+export default function SkinViewer3D({ skinCanvas, skinVersion, skinType }) {
   const canvasRef = useRef(null)
   const viewerRef = useRef(null)
   const [rotating, setRotating] = useState(true)
@@ -37,9 +37,9 @@ export default function SkinViewer3D({ skinCanvas, skinVersion }) {
     if (!viewer || !skinCanvas) return
     skinCanvas.convertToBlob({ type: 'image/png' }).then((blob) => {
       const url = URL.createObjectURL(blob)
-      viewer.loadSkin(url, { model: 'auto-detect' }).then(() => URL.revokeObjectURL(url))
+      viewer.loadSkin(url, { model: skinType === 'slim' ? 'slim' : 'default' }).then(() => URL.revokeObjectURL(url))
     })
-  }, [skinVersion, skinCanvas])
+  }, [skinVersion, skinCanvas, skinType])
 
   const toggleRotate = () => {
     const viewer = viewerRef.current

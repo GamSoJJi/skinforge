@@ -646,6 +646,7 @@ export default function App() {
               <SkinViewer3D
                 skinCanvas={mergeOpen && mergedPreview ? mergedPreview : skinCanvas}
                 skinVersion={mergeOpen ? mergeVersion : skinVersion}
+                skinType={skinType}
               />
             </Suspense>
           </div>
