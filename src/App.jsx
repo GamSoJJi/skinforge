@@ -91,6 +91,7 @@ export default function App() {
   const activeToolRef = useRef(activeTool)
   const pickingSlotRef = useRef(null)
   const pickingPanelRef = useRef(null)
+  const prevToolRef = useRef(null)
   activeColorRef.current = activeColor
   activeToolRef.current = activeTool
 
@@ -313,9 +314,20 @@ export default function App() {
 
   const handlePickStart = useCallback((slot, panel) => {
     const same = pickingSlotRef.current === slot && pickingPanelRef.current === panel
+    if (!same) {
+      if (prevToolRef.current === null) prevToolRef.current = activeToolRef.current
+      setActiveTool('eyedropper')
+    }
     setPickingSlot(same ? null : slot)
     setPickingPanel(same ? null : panel)
   }, [])
+
+  useEffect(() => {
+    if (pickingSlot === null && prevToolRef.current !== null) {
+      setActiveTool(prevToolRef.current)
+      prevToolRef.current = null
+    }
+  }, [pickingSlot])
 
   const handleModalColorPick = useCallback((color) => {
     const slot = pickingSlotRef.current
@@ -411,7 +423,11 @@ export default function App() {
   const [optTip, setOptTip] = useState(null)
   const showOptTip = useCallback((e, text) => {
     const rect = e.currentTarget.getBoundingClientRect()
-    setOptTip({ text, left: rect.left + rect.width / 2, top: rect.bottom + 6 })
+    setOptTip({ text, left: rect.left + rect.width / 2, top: rect.bottom + 6, above: false })
+  }, [])
+  const showBarTip = useCallback((e, text) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    setOptTip({ text, left: rect.left + rect.width / 2, top: rect.top - 6, above: true })
   }, [])
   const hideOptTip = useCallback(() => setOptTip(null), [])
 
@@ -446,7 +462,7 @@ export default function App() {
     const onMove = (e) => {
       const delta = e.clientY - lastY
       lastY = e.clientY
-      setViewerH(h => Math.max(100, Math.min(420, h + delta)))
+      setViewerH(h => Math.max(80, Math.min(window.innerHeight - 160, h + delta)))
     }
     const onUp = () => {
       document.body.classList.remove('resizing-row')
@@ -505,14 +521,20 @@ export default function App() {
         {showBrushOpts && (
           <div className="opt-group">
             <span className="opt-label">크기</span>
-            <button className="mc-btn opt-btn" onClick={() => setBrushSize(s => Math.max(1, s - 1))}>‹</button>
+            <button className="mc-btn opt-btn" onClick={() => setBrushSize(s => Math.max(1, s - 1))}
+              onMouseEnter={(e) => showOptTip(e, '크기 줄이기  [')} onMouseLeave={hideOptTip}>‹</button>
             <input type="number" className="mc-input opt-input" min={1} max={16} value={brushSize}
               onChange={e => { const v = parseInt(e.target.value); if (!isNaN(v)) setBrushSize(Math.max(1, Math.min(16, v))) }} />
-            <button className="mc-btn opt-btn" onClick={() => setBrushSize(s => Math.min(16, s + 1))}>›</button>
+            <button className="mc-btn opt-btn" onClick={() => setBrushSize(s => Math.min(16, s + 1))}
+              onMouseEnter={(e) => showOptTip(e, '크기 늘리기  ]')} onMouseLeave={hideOptTip}>›</button>
             <div className="opt-divider" />
             <span className="opt-label">모양</span>
-            <button className={`mc-btn opt-btn${brushShape === 'square' ? ' active' : ''}`} onClick={() => setBrushShape('square')}>■</button>
-            <button className={`mc-btn opt-btn${brushShape === 'circle' ? ' active' : ''}`} onClick={() => setBrushShape('circle')}>●</button>
+            <button className={`mc-btn opt-btn${brushShape === 'square' ? ' active' : ''}`} onClick={() => setBrushShape('square')}>
+              <svg width="9" height="9" viewBox="0 0 9 9"><rect x="0" y="0" width="9" height="9" fill="currentColor"/></svg>
+            </button>
+            <button className={`mc-btn opt-btn${brushShape === 'circle' ? ' active' : ''}`} onClick={() => setBrushShape('circle')}>
+              <svg width="9" height="9" viewBox="0 0 9 9"><circle cx="4.5" cy="4.5" r="4.5" fill="currentColor"/></svg>
+            </button>
           </div>
         )}
         {showSelOpts && (
@@ -548,24 +570,6 @@ export default function App() {
             )}
           </div>
         )}
-        <div className="opt-spacer" />
-        <div className="opt-group">
-          <span className="opt-label">가이드</span>
-          <label className="toggle-switch">
-            <input type="checkbox" checked={showGuide} onChange={e => setShowGuide(e.target.checked)} />
-            <span className="toggle-track"><span className="toggle-thumb" /></span>
-          </label>
-          <div className="opt-divider" />
-          <span className={`opt-label${skinType === 'normal' ? ' active' : ''}`}>노말</span>
-          <label className="toggle-switch">
-            <input type="checkbox" checked={skinType === 'slim'} onChange={e => setSkinType(e.target.checked ? 'slim' : 'normal')} />
-            <span className="toggle-track"><span className="toggle-thumb" /></span>
-          </label>
-          <span className={`opt-label${skinType === 'slim' ? ' active' : ''}`}>슬림</span>
-          <div className="opt-divider" />
-          <button className="mc-btn opt-btn" onClick={undo} disabled={!canUndo} title={`뒤로가기 ${MOD}Z`}>↩</button>
-          <button className="mc-btn opt-btn" onClick={redo} disabled={!canRedo} title={`앞으로가기 ${REDO_KEY}`}>↪</button>
-        </div>
       </div>
 
       {/* ── Main Workspace ── */}
@@ -576,6 +580,7 @@ export default function App() {
           activeTool={activeTool}
           onToolChange={setActiveTool}
           mergeMode={mergeOpen}
+          pickingActive={pickingSlot !== null}
         />
 
         {/* Center canvas */}
@@ -616,6 +621,25 @@ export default function App() {
                 <TipBanner />
               </>
           }
+          <div className="ps-canvas-bar">
+            <span className="opt-label">가이드</span>
+            <label className="toggle-switch">
+              <input type="checkbox" checked={showGuide} onChange={e => setShowGuide(e.target.checked)} />
+              <span className="toggle-track"><span className="toggle-thumb" /></span>
+            </label>
+            <div className="opt-divider" />
+            <span className={`opt-label${skinType === 'normal' ? ' active' : ''}`}>노말</span>
+            <label className="toggle-switch">
+              <input type="checkbox" checked={skinType === 'slim'} onChange={e => setSkinType(e.target.checked ? 'slim' : 'normal')} />
+              <span className="toggle-track"><span className="toggle-thumb" /></span>
+            </label>
+            <span className={`opt-label${skinType === 'slim' ? ' active' : ''}`}>슬림</span>
+            <div className="opt-divider" />
+            <button className="mc-btn opt-btn" onClick={undo} disabled={!canUndo}
+              onMouseEnter={(e) => showBarTip(e, `뒤로가기  ${MOD}Z`)} onMouseLeave={hideOptTip}>↩</button>
+            <button className="mc-btn opt-btn" onClick={redo} disabled={!canRedo}
+              onMouseEnter={(e) => showBarTip(e, `앞으로가기  ${REDO_KEY}`)} onMouseLeave={hideOptTip}>↪</button>
+          </div>
         </div>
 
         {/* Right panel resize handle */}
@@ -650,7 +674,7 @@ export default function App() {
     </div>
 
     {optTip && (
-      <div className="js-tooltip" style={{ position: 'fixed', left: optTip.left, top: optTip.top, transform: 'translateX(-50%)', zIndex: 9999 }}>
+      <div className="js-tooltip" style={{ position: 'fixed', left: optTip.left, top: optTip.top, transform: optTip.above ? 'translateX(-50%) translateY(-100%)' : 'translateX(-50%)', zIndex: 9999 }}>
         {optTip.text}
       </div>
     )}
