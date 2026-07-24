@@ -471,14 +471,12 @@ export default function SkinMergeModal({ onClose, onMerge, initialSkinA, activeT
         <div className="merge-mode-hints">
           <span><kbd>우클릭</kbd> 선택 초기화</span>
         </div>
+        {hint && <span className="merge-bar-guide">💡 {hint}</span>}
       </div>
 
       <div className="merge-top" style={{ flex: tbSplit }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, width: '100%', height: '100%' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            <span className="merge-section-label">결과</span>
-            {hint && <span className="merge-hint-inline">{hint}</span>}
-          </div>
+          <span className="merge-section-label">결과</span>
           <ResultCanvas merged={merged} />
         </div>
       </div>

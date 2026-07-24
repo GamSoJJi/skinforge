@@ -72,9 +72,9 @@
   --accent-hover:  var(--accent-solid-hover);
   --accent-dim:    var(--accent-tint);
   --accent-border: var(--accent-secondary-border);
-  --canvas-void:   #C8C8C8;  /* neutral grey void */
-  --canvas-skin:   #E4E4E4;  /* neutral grey — transparent skin pixels */
-  --canvas-alt:    var(--surface-2);
+  --canvas-void:   #A8A8A8;  /* darker grey — frames the skin */
+  --canvas-skin:   #F0F0F0;  /* near-white — skin is the bright focal point */
+  --canvas-alt:    #D8D6E0;  /* muted neutral for merge top */
   --error:    var(--error-9);
   --error-dk: var(--error-11);
   --toolbar-w: 44px;
@@ -401,7 +401,7 @@ body { margin: 0; background: var(--bg); font-family: var(--font-body); color: v
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--surface-0);
+  background: var(--canvas-void);
   position: relative;
 }
 
@@ -862,6 +862,12 @@ body.picking-color { cursor: crosshair !important; }
   flex-shrink: 0;
 }
 .merge-hint { font-size: 0.62rem; color: var(--text-dim); flex: 1; }
+.merge-bar-guide {
+  font-size: 0.62rem;
+  color: var(--accent);
+  margin-left: auto;
+  white-space: nowrap;
+}
 .merge-hint-inline {
   font-size: 0.6rem;
   color: var(--accent);
