@@ -9,6 +9,7 @@ function Slot({ index, color, isPicking, onEyedropper, onHexChange }) {
       <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
         <div style={{
           width: 44, height: 44,
+
           background: valid ? color : 'transparent',
           border: `2px ${valid ? 'solid' : 'dashed'} ${isPicking ? '#6677dd' : '#666'}`,
           boxSizing: 'border-box',
@@ -20,8 +21,13 @@ function Slot({ index, color, isPicking, onEyedropper, onHexChange }) {
           className={`mc-btn ${isPicking ? 'active' : ''}`}
           onClick={() => onEyedropper(index)}
           title="캔버스에서 색상 선택"
-          style={{ width: 26, height: 26, padding: 0, fontSize: '0.8rem', flexShrink: 0 }}
-        >🖊</button>
+          style={{ width: 26, height: 26, padding: 0, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="5" cy="5" r="3.5" />
+            <path d="M7.5 7.5 L11 11" strokeWidth="1.6" />
+          </svg>
+        </button>
       </div>
       <input
         className="mc-input"

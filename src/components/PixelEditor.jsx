@@ -147,6 +147,8 @@ export default function PixelEditor({
   const cursorRef = useRef(null)
   const scrollRef = useRef(null)
   const outerRef = useRef(null)
+  const activeColorRef = useRef(activeColor)
+  activeColorRef.current = activeColor
   const isDragging = useRef(false)
   const hasPainted = useRef(false)
   const zoomRef = useRef(1)
@@ -320,10 +322,9 @@ export default function PixelEditor({
       ctx.fillStyle = color || '#ffffff'; ctx.fill()
       ctx.strokeStyle = '#000'; ctx.lineWidth = 0.8; ctx.stroke()
       if (color) {
-        ctx.fillStyle = color
-        ctx.fillRect(cx + 8, cy + 8, 14, 14)
-        ctx.strokeStyle = '#000'; ctx.lineWidth = 0.8
-        ctx.strokeRect(cx + 8, cy + 8, 14, 14)
+        ctx.beginPath(); ctx.arc(cx + 14, cy + 14, 7, 0, Math.PI * 2)
+        ctx.fillStyle = color; ctx.fill()
+        ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.lineWidth = 1; ctx.stroke()
       }
     } else if (activeTool === 'fill') {
       const { x: cx, y: cy } = toScreen(mx + 0.5, my + 0.5)
@@ -336,13 +337,10 @@ export default function PixelEditor({
       drawLine('rgba(0,0,0,0.7)', 1.5, cx, cy - len, cx, cy + len)
       drawLine('rgba(255,255,255,0.95)', 0.8, cx - len, cy, cx + len, cy)
       drawLine('rgba(255,255,255,0.95)', 0.8, cx, cy - len, cx, cy + len)
-      ctx.font = '14px serif'
-      ctx.textBaseline = 'top'; ctx.textAlign = 'left'
-      ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 3
-      ctx.shadowOffsetX = 0.8; ctx.shadowOffsetY = 0.8
-      ctx.fillStyle = '#ffffff'
-      ctx.fillText('🪣', cx + 4, cy + 4)
-      ctx.shadowColor = 'transparent'
+      // fill indicator: small filled square bottom-right of crosshair showing active color
+      const ox = cx + 6, oy = cy + 6, s = 7
+      ctx.fillStyle = 'rgba(0,0,0,0.65)'; ctx.fillRect(ox - 1, oy - 1, s + 2, s + 2)
+      ctx.fillStyle = activeColorRef.current; ctx.fillRect(ox, oy, s, s)
     }
     // rect-select and magic-wand use CSS cursor (no canvas drawing)
   }, [activeTool, brushSize, brushShape])
@@ -417,13 +415,13 @@ export default function PixelEditor({
 
   const getPixelCoords = useCallback((e) => {
     const scrollEl = scrollRef.current
-    const rect = cursorRef.current.getBoundingClientRect()
-    // cursor canvas covers scroll viewport; add scrollLeft/Top to get scroll-content coords
+    const rect = outerRef.current.getBoundingClientRect()
     const scrollX = (e.clientX - rect.left) + scrollEl.scrollLeft
     const scrollY = (e.clientY - rect.top)  + scrollEl.scrollTop
     const px = Math.floor((scrollX - PAD) / (SCALE * zoomRef.current))
     const py = Math.floor((scrollY - PAD) / (SCALE * zoomRef.current))
-    return [Math.max(0, Math.min(63, px)), Math.max(0, Math.min(63, py))]
+    const inBounds = px >= 0 && px < 64 && py >= 0 && py < 64
+    return [Math.max(0, Math.min(63, px)), Math.max(0, Math.min(63, py)), inBounds]
   }, [])
 
   const getHoveredColor = useCallback((px, py) => {
@@ -435,7 +433,8 @@ export default function PixelEditor({
 
   const applyTool = useCallback((e, sel) => {
     if (!skinCanvas) return
-    const [px, py] = getPixelCoords(e)
+    const [px, py, inBounds] = getPixelCoords(e)
+    if (!inBounds) return
     const ctx = skinCanvas.getContext('2d')
     const imageData = ctx.getImageData(0, 0, 64, 64)
 
@@ -464,7 +463,8 @@ export default function PixelEditor({
   const handleMouseDown = useCallback((e) => {
     if (e.button !== 0) return
 
-    const [px, py] = getPixelCoords(e)
+    const [px, py, inBounds] = getPixelCoords(e)
+    if (!inBounds) return
 
     if (modalPickingSlot !== null) {
       if (!skinCanvas) return
@@ -499,8 +499,7 @@ export default function PixelEditor({
   }, [activeTool, getPixelCoords, skinCanvas, contiguous, onSelectionChange, onBeforeEdit, applyTool, selection, drawRectPreview, modalPickingSlot, onModalColorPick])
 
   const handleMouseMove = useCallback((e) => {
-    const [px, py] = getPixelCoords(e)
-    lastPixelPos.current = [px, py]
+    const [px, py, inBounds] = getPixelCoords(e)
 
     if (activeTool === 'rect-select') {
       if (rectStartRef.current) {
@@ -509,6 +508,15 @@ export default function PixelEditor({
       return
     }
 
+    if (!inBounds) {
+      const c = cursorRef.current
+      if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height)
+      if (outerRef.current) outerRef.current.style.cursor = 'default'
+      return
+    }
+    if (outerRef.current) outerRef.current.style.cursor = cursorStyleRef.current
+
+    lastPixelPos.current = [px, py]
     if (activeTool === 'magic-wand') return
 
     const hovColor = activeTool === 'eyedropper' ? getHoveredColor(px, py) : null
@@ -579,7 +587,7 @@ export default function PixelEditor({
       e.preventDefault()
       isPanning.current = true
       panStart.current = { x: e.clientX, y: e.clientY, scrollLeft: scrollEl.scrollLeft, scrollTop: scrollEl.scrollTop }
-      if (cursorRef.current) cursorRef.current.style.cursor = 'grabbing'
+      if (outerRef.current) outerRef.current.style.cursor = 'grabbing'
     }
     const onMouseMove = (e) => {
       if (!isPanning.current) return
@@ -590,12 +598,12 @@ export default function PixelEditor({
     const onMouseUp = (e) => {
       if (e.button !== 1 || !isPanning.current) return
       isPanning.current = false
-      if (cursorRef.current) cursorRef.current.style.cursor = ''
+      if (outerRef.current) outerRef.current.style.cursor = cursorStyleRef.current
     }
     const onMouseLeave = () => {
       if (!isPanning.current) return
       isPanning.current = false
-      if (cursorRef.current) cursorRef.current.style.cursor = ''
+      if (outerRef.current) outerRef.current.style.cursor = cursorStyleRef.current
     }
     outer.addEventListener('mousedown', onMouseDown)
     window.addEventListener('mousemove', onMouseMove)
@@ -609,14 +617,24 @@ export default function PixelEditor({
     }
   }, [])
 
-  const cursorStyle =
-    modalPickingSlot !== null    ? 'crosshair' :
+  const cursorStyleRef = useRef('none')
+  cursorStyleRef.current =
     activeTool === 'rect-select' ? 'crosshair' :
     activeTool === 'magic-wand'  ? 'cell' : 'none'
 
+  useEffect(() => {
+    if (outerRef.current) outerRef.current.style.cursor = cursorStyleRef.current
+  }, [activeTool])
+
   return (
     // outerRef: flex container that defines the visible viewport; cursor canvas is positioned here
-    <div ref={outerRef} style={{ flex: 1, position: 'relative', overflow: 'hidden', minWidth: 0, minHeight: 0 }}>
+    <div ref={outerRef}
+      style={{ flex: 1, position: 'relative', overflow: 'hidden', minWidth: 0, minHeight: 0 }}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
+    >
       {/* Scroll container: absolute-fills the outer wrapper */}
       <div className="pixel-editor-scroll" ref={scrollRef} style={{ position: 'absolute', inset: 0, overflow: 'auto' }}>
         {/* PAD box: adds scrollable space outside the canvas on each side */}
@@ -640,17 +658,12 @@ export default function PixelEditor({
         </div>
       </div>
 
-      {/* Cursor overlay: outside scale transform, covers the viewport at 1:1 screen pixels.
-          Mouse events are received here so getPixelCoords can use scroll+zoom math. */}
+      {/* Cursor overlay: drawing only — pointer-events disabled, events handled by outerRef */}
       <canvas ref={cursorRef}
         width={cursorSize.w} height={cursorSize.h}
         style={{ position: 'absolute', top: 0, left: 0,
                  width: cursorSize.w, height: cursorSize.h,
-                 cursor: cursorStyle }}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseLeave}
+                 pointerEvents: 'none' }}
       />
     </div>
   )
