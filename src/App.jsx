@@ -1,10 +1,9 @@
 import { useCallback, useState, useEffect, useRef } from 'react'
+import { Sun, Moon, Square, Circle } from 'lucide-react'
 import SkinViewer3D from './components/SkinViewer3D'
 import PixelEditor from './components/PixelEditor'
 import ToolPanel from './components/ToolPanel'
 import ColorPanel from './components/ColorPanel'
-import ColorReplacePanel from './components/ColorReplacePanel'
-import ShadeRemapPanel from './components/ShadeRemapPanel'
 import SkinMergeModal from './components/SkinMergeModal'
 import TipBanner from './components/TipBanner'
 import './App.css'
@@ -80,19 +79,14 @@ export default function App() {
   const [mergeVersion, setMergeVersion] = useState(0)
   const [mergeHasSel, setMergeHasSel] = useState(false)
   const clearMergeSelRef = useRef(null)
-  const [colorMenuOpen, setColorMenuOpen] = useState(false)
   const [historyPalette, setHistoryPalette] = useState(
     () => DEFAULT_PALETTE.map(c => ({ color: c, pinned: false }))
   )
 
   const fileMenuRef = useRef(null)
-  const colorMenuRef = useRef(null)
   const fileInputRef = useRef(null)
   const activeColorRef = useRef(activeColor)
   const activeToolRef = useRef(activeTool)
-  const pickingSlotRef = useRef(null)
-  const pickingPanelRef = useRef(null)
-  const prevToolRef = useRef(null)
   activeColorRef.current = activeColor
   activeToolRef.current = activeTool
 
@@ -104,11 +98,10 @@ export default function App() {
   useEffect(() => {
     const handleClick = (e) => {
       if (fileMenuRef.current && !fileMenuRef.current.contains(e.target)) setFileMenuOpen(false)
-      if (colorMenuRef.current && !colorMenuRef.current.contains(e.target)) setColorMenuOpen(false)
     }
-    if (fileMenuOpen || colorMenuOpen) document.addEventListener('mousedown', handleClick)
+    if (fileMenuOpen) document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
-  }, [fileMenuOpen, colorMenuOpen])
+  }, [fileMenuOpen])
 
   const addToHistory = useCallback((newColor) => {
     if (!newColor || newColor.length !== 7) return
@@ -189,16 +182,7 @@ export default function App() {
       if ((e.metaKey || e.ctrlKey) && (e.code === 'KeyY' || (e.code === 'KeyZ' && e.shiftKey))) {
         e.preventDefault(); redo()
       }
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.code === 'KeyR') {
-        e.preventDefault(); setColorReplaceOpen(v => !v)
-      }
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.code === 'KeyH') {
-        e.preventDefault(); setShadeRemapOpen(v => !v)
-      }
       if (e.key === 'Escape') {
-        if (pickingSlotRef.current !== null) {
-          setPickingSlot(null); setPickingPanel(null); return
-        }
         if (selectionRef.current !== null) handleSelectionChange(null); return
       }
       if (document.activeElement?.tagName === 'INPUT') return
@@ -206,7 +190,9 @@ export default function App() {
       if (e.code === 'KeyE') setActiveTool('eraser')
       if (e.code === 'KeyG') setActiveTool('fill')
       if (e.code === 'KeyI') setActiveTool('eyedropper')
+      if (e.code === 'KeyR') setActiveTool('color-replace')
       if (e.code === 'KeyM') setActiveTool('rect-select')
+      if (e.code === 'KeyW') setActiveTool('magic-wand')
       if (e.code === 'BracketLeft')  setBrushSize((s) => Math.max(1, s - 1))
       if (e.code === 'BracketRight') setBrushSize((s) => Math.min(16, s + 1))
     }
@@ -306,62 +292,20 @@ export default function App() {
 
   const [showGuide, setShowGuide] = useState(true)
   // ─── Color Replace / Shade Remap ───────────────────────
-  const [colorReplaceOpen, setColorReplaceOpen] = useState(false)
-  const [replaceColors, setReplaceColors] = useState(['', ''])
-  const [shadeRemapOpen, setShadeRemapOpen] = useState(false)
-  const [shadeColors, setShadeColors] = useState(['', ''])
+  const [wandTolerance, setWandTolerance] = useState(0)
+  const [colorReplaceMode, setColorReplaceMode] = useState('single')
   const [shadeToleranceMinus, setShadeToleranceMinus] = useState(30)
   const [shadeTolerancePlus, setShadeTolerancePlus] = useState(30)
   const [shadeLTolerance, setShadeLTolerance] = useState(50)
-  const [pickingSlot, setPickingSlot] = useState(null)
-  const [pickingPanel, setPickingPanel] = useState(null)
-  pickingSlotRef.current = pickingSlot
-  pickingPanelRef.current = pickingPanel
 
-  const handlePickStart = useCallback((slot, panel) => {
-    const same = pickingSlotRef.current === slot && pickingPanelRef.current === panel
-    if (!same) {
-      if (prevToolRef.current === null) prevToolRef.current = activeToolRef.current
-      setActiveTool('eyedropper')
-    }
-    setPickingSlot(same ? null : slot)
-    setPickingPanel(same ? null : panel)
-  }, [])
-
-  useEffect(() => {
-    if (pickingSlot === null && prevToolRef.current !== null) {
-      setActiveTool(prevToolRef.current)
-      prevToolRef.current = null
-    }
-  }, [pickingSlot])
-
-  const handleModalColorPick = useCallback((color) => {
-    const slot = pickingSlotRef.current
-    const panel = pickingPanelRef.current
-    if (panel === 'replace') {
-      setReplaceColors(prev => { const n = [...prev]; n[slot] = color; return n })
-    } else if (panel === 'remap') {
-      setShadeColors(prev => { const n = [...prev]; n[slot] = color; return n })
-    }
-    setPickingSlot(null)
-    setPickingPanel(null)
-  }, [])
-
-  const handleReplaceColorChange = useCallback((slot, value) => {
-    setReplaceColors(prev => { const n = [...prev]; n[slot] = value; return n })
-  }, [])
-
-  const handleShadeColorChange = useCallback((slot, value) => {
-    setShadeColors(prev => { const n = [...prev]; n[slot] = value; return n })
-  }, [])
-
-  const handleColorReplace = useCallback((from, to) => {
+  const handleColorReplace = useCallback((from, to, sel) => {
     const f = hexToRgb(from), t = hexToRgb(to)
     pushUndo()
     const ctx = skinCanvas.getContext('2d')
     const img = ctx.getImageData(0, 0, 64, 64)
     const d = img.data
     for (let i = 0; i < d.length; i += 4) {
+      if (sel && !sel.has(i / 4)) continue
       if (d[i] === f.r && d[i+1] === f.g && d[i+2] === f.b && d[i+3] > 0) {
         d[i] = t.r; d[i+1] = t.g; d[i+2] = t.b
       }
@@ -370,32 +314,7 @@ export default function App() {
     setSkinVersion(v => v + 1)
   }, [skinCanvas, pushUndo])
 
-  const sourceColor = shadeColors[0]
-  const [shadePreviewSel, setShadePreviewSel] = useState(null)
-
-  useEffect(() => {
-    if (!shadeRemapOpen || !/^#[0-9a-fA-F]{6}$/.test(sourceColor)) {
-      setShadePreviewSel(null)
-      return
-    }
-    const srcHsl = rgbToHsl(hexToRgb(sourceColor))
-    const ctx = skinCanvas.getContext('2d')
-    const img = ctx.getImageData(0, 0, 64, 64)
-    const d = img.data
-    const sel = new Set()
-    for (let i = 0; i < d.length; i += 4) {
-      if (d[i + 3] === 0) continue
-      const pHsl = rgbToHsl({ r: d[i], g: d[i + 1], b: d[i + 2] })
-      if (Math.abs(pHsl.l - srcHsl.l) * 100 > shadeLTolerance) continue
-      let delta = pHsl.h - srcHsl.h
-      if (delta > 180) delta -= 360
-      if (delta < -180) delta += 360
-      if (delta >= -shadeToleranceMinus && delta <= shadeTolerancePlus) sel.add(i / 4)
-    }
-    setShadePreviewSel(sel.size > 0 ? sel : null)
-  }, [shadeRemapOpen, sourceColor, shadeToleranceMinus, shadeTolerancePlus, shadeLTolerance, skinVersion, skinCanvas])
-
-  const handleShadeRemap = useCallback((sourceHex, targetHex, tolMinus, tolPlus, tolL) => {
+  const handleShadeRemap = useCallback((sourceHex, targetHex, tolMinus, tolPlus, tolL, sel) => {
     const srcHsl = rgbToHsl(hexToRgb(sourceHex))
     const tgtHsl = rgbToHsl(hexToRgb(targetHex))
     const lOffset = tgtHsl.l - srcHsl.l
@@ -404,6 +323,7 @@ export default function App() {
     const img = ctx.getImageData(0, 0, 64, 64)
     const d = img.data
     for (let i = 0; i < d.length; i += 4) {
+      if (sel && !sel.has(i / 4)) continue
       if (d[i + 3] === 0) continue
       const pHsl = rgbToHsl({ r: d[i], g: d[i + 1], b: d[i + 2] })
       if (Math.abs(pHsl.l - srcHsl.l) * 100 > tolL) continue
@@ -419,6 +339,14 @@ export default function App() {
     ctx.putImageData(img, 0, 0)
     setSkinVersion(v => v + 1)
   }, [skinCanvas, pushUndo])
+
+  const handleToolColorReplace = useCallback((fromColor) => {
+    if (colorReplaceMode === 'single') {
+      handleColorReplace(fromColor, activeColor, selection || undefined)
+    } else {
+      handleShadeRemap(fromColor, activeColor, shadeToleranceMinus, shadeTolerancePlus, shadeLTolerance, selection || undefined)
+    }
+  }, [colorReplaceMode, handleColorReplace, handleShadeRemap, activeColor, selection, shadeToleranceMinus, shadeTolerancePlus, shadeLTolerance])
 
   const SEL_MODES = [
     { id: 'replace', label: '교체',   icon: '⬚', shortcut: null },
@@ -482,6 +410,7 @@ export default function App() {
   const effectiveSelMode = shiftHeld ? 'union' : altHeld ? 'diff' : selMode
   const showBrushOpts = !mergeOpen && (activeTool === 'pen' || activeTool === 'eraser')
   const showSelOpts = activeTool === 'rect-select' || activeTool === 'magic-wand'
+  const showColorReplaceOpts = activeTool === 'color-replace'
   const hasSelectionActive = mergeOpen ? mergeHasSel : selection !== null
 
   return (
@@ -506,34 +435,9 @@ export default function App() {
               </div>
             )}
           </div>
-          <div className="mc-menu-item" ref={colorMenuRef}>
-            <button className={`mc-menu-btn${colorMenuOpen ? ' active' : ''}`} onClick={() => setColorMenuOpen(v => !v)}>색상</button>
-            {colorMenuOpen && (
-              <div className="mc-dropdown">
-                <button className="mc-dropdown-item" onClick={() => { setColorReplaceOpen(true); setShadeRemapOpen(false); setColorMenuOpen(false) }}>
-                  <span>색상 변경</span><span className="mc-dropdown-shortcut">{MOD}{SHIFT}R</span>
-                </button>
-                <button className="mc-dropdown-item" onClick={() => { setShadeRemapOpen(true); setColorReplaceOpen(false); setColorMenuOpen(false) }}>
-                  <span>색조 변경</span><span className="mc-dropdown-shortcut">{MOD}{SHIFT}H</span>
-                </button>
-              </div>
-            )}
-          </div>
         </nav>
         <button className="theme-btn" onClick={() => setDarkMode(v => !v)} title={darkMode ? '라이트 모드' : '다크 모드'}>
-          {darkMode ? (
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="8" cy="8" r="3"/>
-              <line x1="8" y1="1" x2="8" y2="2.5"/><line x1="8" y1="13.5" x2="8" y2="15"/>
-              <line x1="1" y1="8" x2="2.5" y2="8"/><line x1="13.5" y1="8" x2="15" y2="8"/>
-              <line x1="3.05" y1="3.05" x2="4.1" y2="4.1"/><line x1="11.9" y1="11.9" x2="12.95" y2="12.95"/>
-              <line x1="12.95" y1="3.05" x2="11.9" y2="4.1"/><line x1="4.1" y1="11.9" x2="3.05" y2="12.95"/>
-            </svg>
-          ) : (
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-              <path d="M13.5 9.5A6 6 0 1 1 6.5 2.5a4.5 4.5 0 0 0 7 7z"/>
-            </svg>
-          )}
+          {darkMode ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
         </button>
       </header>
 
@@ -551,11 +455,44 @@ export default function App() {
             <div className="opt-divider" />
             <span className="opt-label">모양</span>
             <button className={`mc-btn opt-btn${brushShape === 'square' ? ' active' : ''}`} onClick={() => setBrushShape('square')}>
-              <svg width="9" height="9" viewBox="0 0 9 9"><rect x="0" y="0" width="9" height="9" fill="currentColor"/></svg>
+              <Square size={10} strokeWidth={0} fill="currentColor" />
             </button>
             <button className={`mc-btn opt-btn${brushShape === 'circle' ? ' active' : ''}`} onClick={() => setBrushShape('circle')}>
-              <svg width="9" height="9" viewBox="0 0 9 9"><circle cx="4.5" cy="4.5" r="4.5" fill="currentColor"/></svg>
+              <Circle size={10} strokeWidth={0} fill="currentColor" />
             </button>
+          </div>
+        )}
+        {showColorReplaceOpts && (
+          <div className="opt-group">
+            <button className={`mc-btn opt-btn${colorReplaceMode === 'single' ? ' active' : ''}`}
+              onClick={() => setColorReplaceMode('single')}
+              onMouseEnter={(e) => showOptTip(e, '단색 교체')} onMouseLeave={hideOptTip}>단색</button>
+            <button className={`mc-btn opt-btn${colorReplaceMode === 'shade' ? ' active' : ''}`}
+              onClick={() => setColorReplaceMode('shade')}
+              onMouseEnter={(e) => showOptTip(e, '색조 일괄 교체')} onMouseLeave={hideOptTip}>색조</button>
+            {colorReplaceMode === 'shade' && (
+              <>
+                <div className="opt-divider" />
+                <span className="opt-label">색조 H</span>
+                <span className="opt-shade-val">−{shadeToleranceMinus}°</span>
+                <input type="range" min={0} max={90} step={5}
+                  value={shadeToleranceMinus}
+                  onChange={e => setShadeToleranceMinus(Number(e.target.value))}
+                  className="opt-shade-slider" />
+                <span className="opt-shade-val">+{shadeTolerancePlus}°</span>
+                <input type="range" min={0} max={90} step={5}
+                  value={shadeTolerancePlus}
+                  onChange={e => setShadeTolerancePlus(Number(e.target.value))}
+                  className="opt-shade-slider" />
+                <div className="opt-divider" />
+                <span className="opt-label">명도 L</span>
+                <span className="opt-shade-val">±{shadeLTolerance}%</span>
+                <input type="range" min={0} max={50} step={1}
+                  value={shadeLTolerance}
+                  onChange={e => setShadeLTolerance(Number(e.target.value))}
+                  className="opt-shade-slider" />
+              </>
+            )}
           </div>
         )}
         {showSelOpts && (
@@ -578,6 +515,14 @@ export default function App() {
                   <input type="checkbox" checked={contiguous} onChange={e => setContiguous(e.target.checked)} />
                   <span>근접</span>
                 </label>
+                <div className="opt-divider" />
+                <span className="opt-label">허용치</span>
+                <button className="mc-btn opt-btn" onClick={() => setWandTolerance(t => Math.max(0, t - 5))}
+                  onMouseEnter={(e) => showOptTip(e, '허용치 감소')} onMouseLeave={hideOptTip}>‹</button>
+                <input type="number" className="mc-input opt-input" min={0} max={255} value={wandTolerance}
+                  onChange={e => { const v = parseInt(e.target.value); if (!isNaN(v)) setWandTolerance(Math.max(0, Math.min(255, v))) }} />
+                <button className="mc-btn opt-btn" onClick={() => setWandTolerance(t => Math.min(255, t + 5))}
+                  onMouseEnter={(e) => showOptTip(e, '허용치 증가')} onMouseLeave={hideOptTip}>›</button>
               </>
             )}
             {hasSelectionActive && (
@@ -601,7 +546,7 @@ export default function App() {
           activeTool={activeTool}
           onToolChange={setActiveTool}
           mergeMode={mergeOpen}
-          pickingActive={pickingSlot !== null}
+          pickingActive={false}
         />
 
         {/* Center canvas */}
@@ -627,6 +572,8 @@ export default function App() {
                   activeTool={activeTool}
                   activeColor={activeColor}
                   onColorPicked={handleColorPicked}
+                  onColorReplace={handleToolColorReplace}
+                  modalPickingSlot={null}
                   brushSize={brushSize}
                   brushShape={brushShape}
                   skinType={skinType}
@@ -634,10 +581,9 @@ export default function App() {
                   selection={selection}
                   onSelectionChange={handleSelectionChange}
                   contiguous={contiguous}
+                  wandTolerance={wandTolerance}
                   selMode={selMode}
-                  modalPickingSlot={pickingSlot}
-                  onModalColorPick={handleModalColorPick}
-                  shadePreview={shadePreviewSel}
+                  shadePreview={null}
                 />
                 <TipBanner />
               </>
@@ -700,32 +646,6 @@ export default function App() {
       </div>
     )}
 
-    {colorReplaceOpen && (
-      <ColorReplacePanel
-        colors={replaceColors}
-        pickingSlot={pickingPanel === 'replace' ? pickingSlot : null}
-        onEyedropper={(slot) => handlePickStart(slot, 'replace')}
-        onColorChange={handleReplaceColorChange}
-        onApply={handleColorReplace}
-        onClose={() => { setColorReplaceOpen(false); setPickingSlot(null); setPickingPanel(null) }}
-      />
-    )}
-    {shadeRemapOpen && (
-      <ShadeRemapPanel
-        colors={shadeColors}
-        pickingSlot={pickingPanel === 'remap' ? pickingSlot : null}
-        onEyedropper={(slot) => handlePickStart(slot, 'remap')}
-        onColorChange={handleShadeColorChange}
-        onApply={handleShadeRemap}
-        tolMinus={shadeToleranceMinus}
-        tolPlus={shadeTolerancePlus}
-        onTolMinusChange={setShadeToleranceMinus}
-        onTolPlusChange={setShadeTolerancePlus}
-        tolL={shadeLTolerance}
-        onTolLChange={setShadeLTolerance}
-        onClose={() => { setShadeRemapOpen(false); setPickingSlot(null); setPickingPanel(null) }}
-      />
-    )}
     </>
   )
 }

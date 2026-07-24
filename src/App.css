@@ -271,6 +271,20 @@ body { margin: 0; background: var(--bg); font-family: var(--font-body); color: v
 }
 .opt-check input { accent-color: var(--accent); cursor: pointer; }
 
+.opt-shade-slider {
+  width: 68px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  vertical-align: middle;
+}
+.opt-shade-val {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  min-width: 28px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 .opt-clear {
   font-size: 0.62rem;
   color: var(--error-11);
@@ -597,8 +611,11 @@ body.resizing-row { cursor: row-resize !important; user-select: none; }
 
 .hex-input { flex: 1; width: 0; }
 
-.picker-wrap { border: 1px solid var(--border); overflow: hidden; }
-.picker-wrap .react-colorful { width: 100% !important; height: 110px !important; }
+.picker-wrap { border: 1px solid var(--border); overflow: hidden; aspect-ratio: 1; border-radius: 0; }
+.picker-wrap .react-colorful { width: 100% !important; height: 100% !important; border-radius: 0 !important; }
+.picker-wrap .react-colorful__saturation { border-radius: 0 !important; }
+.picker-wrap .react-colorful__hue,
+.picker-wrap .react-colorful__last-control { border-radius: 0 !important; }
 
 .palette-tabs { display: flex; gap: 2px; }
 .tab-btn { flex: 1; font-size: 0.6rem; padding: 3px 2px; }

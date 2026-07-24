@@ -63,11 +63,14 @@ function floodFill(imageData, startX, startY, fillColor, sel) {
   }
 }
 
-function magicWandSelect(imageData, px, py, contiguous) {
+function magicWandSelect(imageData, px, py, contiguous, tolerance) {
   const { data, width, height } = imageData
   const i = (py * width + px) * 4
   const tR = data[i], tG = data[i+1], tB = data[i+2], tA = data[i+3]
   const selected = new Set()
+  const matches = (j) =>
+    Math.max(Math.abs(data[j]-tR), Math.abs(data[j+1]-tG),
+             Math.abs(data[j+2]-tB), Math.abs(data[j+3]-tA)) <= tolerance
   if (contiguous) {
     const queue = [[px, py]]
     const visited = new Uint8Array(width * height)
@@ -75,7 +78,7 @@ function magicWandSelect(imageData, px, py, contiguous) {
       const [x, y] = queue.pop()
       if (x < 0 || x >= width || y < 0 || y >= height || visited[y * width + x]) continue
       const j = (y * width + x) * 4
-      if (data[j] !== tR || data[j+1] !== tG || data[j+2] !== tB || data[j+3] !== tA) continue
+      if (!matches(j)) continue
       visited[y * width + x] = 1
       selected.add(y * width + x)
       queue.push([x+1, y], [x-1, y], [x, y+1], [x, y-1])
@@ -84,9 +87,7 @@ function magicWandSelect(imageData, px, py, contiguous) {
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const j = (y * width + x) * 4
-        if (data[j] === tR && data[j+1] === tG && data[j+2] === tB && data[j+3] === tA) {
-          selected.add(y * width + x)
-        }
+        if (matches(j)) selected.add(y * width + x)
       }
     }
   }
@@ -134,9 +135,9 @@ function strokeMarchingAnts(ctx, path, dashOffset, c1 = 'white', c2 = 'rgba(0,0,
 
 export default function PixelEditor({
   skinCanvas, skinVersion, onPixelChange, onBeforeEdit,
-  activeTool, activeColor, onColorPicked,
+  activeTool, activeColor, onColorPicked, onColorReplace,
   brushSize, brushShape, skinType, showGuide,
-  selection, onSelectionChange, contiguous, selMode,
+  selection, onSelectionChange, contiguous, wandTolerance, selMode,
   modalPickingSlot, onModalColorPick,
   shadePreview,
 }) {
@@ -445,6 +446,13 @@ export default function PixelEditor({
         .map(v => v.toString(16).padStart(2, '0')).join(''))
       return
     }
+    if (activeTool === 'color-replace') {
+      const i = (py * 64 + px) * 4
+      if (imageData.data[i + 3] === 0) return
+      onColorReplace('#' + [imageData.data[i], imageData.data[i+1], imageData.data[i+2]]
+        .map(v => v.toString(16).padStart(2, '0')).join(''))
+      return
+    }
     if (activeTool === 'pen') {
       paintBrush(imageData, px, py, brushSize, brushShape, hexToRgba(activeColor), sel)
     } else if (activeTool === 'eraser') {
@@ -458,7 +466,7 @@ export default function PixelEditor({
     ctx.putImageData(imageData, 0, 0)
     hasPainted.current = true
     redrawSkin()
-  }, [skinCanvas, activeTool, activeColor, onColorPicked, onPixelChange, redrawSkin, brushSize, brushShape, getPixelCoords])
+  }, [skinCanvas, activeTool, activeColor, onColorPicked, onColorReplace, onPixelChange, redrawSkin, brushSize, brushShape, getPixelCoords])
 
   const handleMouseDown = useCallback((e) => {
     if (e.button !== 0) return
@@ -487,16 +495,16 @@ export default function PixelEditor({
       const mode = e.shiftKey ? 'union' : e.altKey ? 'diff' : base
       const ctx = skinCanvas.getContext('2d')
       const imageData = ctx.getImageData(0, 0, 64, 64)
-      const newSel = magicWandSelect(imageData, px, py, contiguous)
+      const newSel = magicWandSelect(imageData, px, py, contiguous, wandTolerance)
       onSelectionChange(applySelectionMode(newSel, mode, selection))
       return
     }
 
     isDragging.current = true
     hasPainted.current = false
-    if (activeTool !== 'eyedropper') onBeforeEdit()
+    if (activeTool !== 'eyedropper' && activeTool !== 'color-replace') onBeforeEdit()
     applyTool(e, selection)
-  }, [activeTool, getPixelCoords, skinCanvas, contiguous, onSelectionChange, onBeforeEdit, applyTool, selection, drawRectPreview, modalPickingSlot, onModalColorPick])
+  }, [activeTool, getPixelCoords, skinCanvas, contiguous, wandTolerance, onSelectionChange, onBeforeEdit, applyTool, selection, drawRectPreview, modalPickingSlot, onModalColorPick])
 
   const handleMouseMove = useCallback((e) => {
     const [px, py, inBounds] = getPixelCoords(e)
@@ -521,7 +529,7 @@ export default function PixelEditor({
 
     const hovColor = activeTool === 'eyedropper' ? getHoveredColor(px, py) : null
     redrawCursor(px, py, hovColor)
-    if (!isDragging.current || activeTool === 'fill' || activeTool === 'eyedropper') return
+    if (!isDragging.current || activeTool === 'fill' || activeTool === 'eyedropper' || activeTool === 'color-replace') return
     applyTool(e, selection)
   }, [activeTool, getPixelCoords, drawRectPreview, applyTool, selection, redrawCursor, getHoveredColor])
 
@@ -619,8 +627,9 @@ export default function PixelEditor({
 
   const cursorStyleRef = useRef('none')
   cursorStyleRef.current =
-    activeTool === 'rect-select' ? 'crosshair' :
-    activeTool === 'magic-wand'  ? 'cell' : 'none'
+    activeTool === 'rect-select'   ? 'crosshair' :
+    activeTool === 'color-replace' ? 'crosshair' :
+    activeTool === 'magic-wand'    ? 'cell' : 'none'
 
   useEffect(() => {
     if (outerRef.current) outerRef.current.style.cursor = cursorStyleRef.current
