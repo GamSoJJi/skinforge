@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import * as skinview3d from 'skinview3d'
-import { Footprints, PersonStanding, RotateCw } from 'lucide-react'
+import { Footprints, PersonStanding, RotateCw, Image, ImageOff } from 'lucide-react'
+import viewerBg from '../assets/viewer-background.png'
+import { useLang } from '../i18n/LangContext.jsx'
 
 // Minecraft 비율 기준 (3배 스케일): viewBox 48×96
 const PART_DEFS = [
@@ -22,6 +24,8 @@ export default function SkinViewer3D({ skinCanvas, skinVersion, skinType }) {
   const [walking, setWalking]   = useState(true)
   const [parts, setParts]       = useState(INIT_PARTS)
   const [overlays, setOverlays] = useState(INIT_OVERLAYS)
+  const [showBg, setShowBg]     = useState(true)
+  const { t } = useLang()
 
   useEffect(() => {
     if (!canvasRef.current) return
@@ -30,8 +34,9 @@ export default function SkinViewer3D({ skinCanvas, skinVersion, skinType }) {
       canvas: canvasRef.current,
       width: container?.clientWidth || 420,
       height: container?.clientHeight || 500,
+      alpha: true,
     })
-    viewer.background = 0x2a2a2a
+    viewer.background = null
     viewer.autoRotate = true
     viewer.autoRotateSpeed = 1.2
     viewer.animation = new skinview3d.WalkingAnimation()
@@ -109,8 +114,9 @@ export default function SkinViewer3D({ skinCanvas, skinVersion, skinType }) {
   }
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
+    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+      {showBg && <img src={viewerBg} className="viewer-bg" alt="" aria-hidden="true" />}
+      <canvas ref={canvasRef} style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%', display: 'block' }} />
 
       {/* 파츠 토글 — 좌하단 (스킨 / 오버레이 두 실루엣) */}
       <div className="viewer-parts-wrap">
@@ -144,16 +150,23 @@ export default function SkinViewer3D({ skinCanvas, skinVersion, skinType }) {
 
       <div className="viewer-controls">
         <button
+          className={`viewer-btn ${showBg ? 'active' : ''}`}
+          onClick={() => setShowBg(v => !v)}
+          data-tip={showBg ? t.viewer.bgOn : t.viewer.bgOff}
+        >
+          {showBg ? <Image size={14} strokeWidth={1.8} /> : <ImageOff size={14} strokeWidth={1.8} />}
+        </button>
+        <button
           className={`viewer-btn ${walking ? 'active' : ''}`}
           onClick={toggleWalk}
-          title={walking ? '서기' : '걷기'}
+          data-tip={walking ? t.viewer.walkOn : t.viewer.walkOff}
         >
           {walking ? <Footprints size={14} strokeWidth={1.8} /> : <PersonStanding size={14} strokeWidth={1.8} />}
         </button>
         <button
           className={`viewer-btn ${rotating ? 'active' : ''}`}
           onClick={toggleRotate}
-          title={rotating ? '회전 정지' : '회전 시작'}
+          data-tip={rotating ? t.viewer.rotateOn : t.viewer.rotateOff}
         >
           <RotateCw size={14} strokeWidth={1.8} />
         </button>

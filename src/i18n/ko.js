@@ -71,6 +71,16 @@ export const ko = {
     followTip:   '입힐 스킨을 불러오세요',
   },
 
+  // ── 뷰어 버튼
+  viewer: {
+    bgOn:        '배경 끄기',
+    bgOff:       '배경 켜기',
+    walkOn:      '서기',
+    walkOff:     '걷기',
+    rotateOn:    '회전 정지',
+    rotateOff:   '회전 시작',
+  },
+
   // ── 팁
   tips: [
     '하단 토글로 가이드를 켜고 끌 수 있어요',

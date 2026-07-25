@@ -734,6 +734,7 @@ body.resizing-row { cursor: row-resize !important; user-select: none; }
   bottom: 6px; right: 6px;
   display: flex;
   gap: 4px;
+  z-index: 2;
 }
 .viewer-btn {
   background: rgba(20, 15, 40, 0.7);
@@ -751,6 +752,39 @@ body.resizing-row { cursor: row-resize !important; user-select: none; }
 .viewer-btn:hover { background: rgba(60,60,60,0.8); }
 .viewer-btn.active { background: var(--accent-dim); border-color: var(--accent-border); }
 
+.viewer-btn[data-tip] { position: relative; }
+.viewer-btn[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface-0);
+  color: var(--text);
+  font-size: 0.62rem;
+  font-family: var(--font-body);
+  padding: 3px 7px;
+  border-radius: 6px;
+  border: 1px solid var(--border-mid);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 3px 12px rgba(80, 60, 180, 0.3);
+  opacity: 0;
+  transition: opacity 0.12s;
+  z-index: 9999;
+}
+.viewer-btn[data-tip]:hover::after { opacity: 1; }
+
+.viewer-bg {
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  height: 100%;
+  width: auto;
+  z-index: 0;
+  pointer-events: none;
+}
+
 .viewer-parts-wrap {
   position: absolute;
   bottom: 8px;
@@ -758,6 +792,7 @@ body.resizing-row { cursor: row-resize !important; user-select: none; }
   display: flex;
   gap: 4px;
   filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+  z-index: 2;
 }
 .viewer-parts {
   width: 28px;

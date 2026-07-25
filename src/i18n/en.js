@@ -71,6 +71,16 @@ export const en = {
     followTip:   'Load an outfit skin',
   },
 
+  // ── Viewer buttons
+  viewer: {
+    bgOn:        'Hide background',
+    bgOff:       'Show background',
+    walkOn:      'Stop walking',
+    walkOff:     'Start walking',
+    rotateOn:    'Stop rotation',
+    rotateOff:   'Start rotation',
+  },
+
   // ── Tips
   tips: [
     'Toggle the guide overlay on/off from the bottom bar',
