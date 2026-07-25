@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import * as skinview3d from 'skinview3d'
+import { Footprints, PersonStanding, RotateCw } from 'lucide-react'
 
 export default function SkinViewer3D({ skinCanvas, skinVersion, skinType }) {
   const canvasRef = useRef(null)
@@ -67,14 +68,14 @@ export default function SkinViewer3D({ skinCanvas, skinVersion, skinType }) {
           onClick={toggleWalk}
           title={walking ? '서기' : '걷기'}
         >
-          {walking ? '🚶' : '🧍'}
+          {walking ? <Footprints size={14} strokeWidth={1.8} /> : <PersonStanding size={14} strokeWidth={1.8} />}
         </button>
         <button
           className={`viewer-btn ${rotating ? 'active' : ''}`}
           onClick={toggleRotate}
           title={rotating ? '회전 정지' : '회전 시작'}
         >
-          {rotating ? '⏸' : '▶'}
+          <RotateCw size={14} strokeWidth={1.8} />
         </button>
       </div>
     </div>
