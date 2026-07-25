@@ -1,12 +1,25 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import * as skinview3d from 'skinview3d'
 import { Footprints, PersonStanding, RotateCw } from 'lucide-react'
+
+// Minecraft 비율 기준 (3배 스케일): viewBox 48×96
+const PART_DEFS = [
+  { name: 'head',     label: '머리',   x: 12, y: 0,  w: 24, h: 23 },
+  { name: 'body',     label: '몸통',   x: 12, y: 24, w: 24, h: 35 },
+  { name: 'rightArm', label: '오른팔', x: 0,  y: 24, w: 11, h: 35 },
+  { name: 'leftArm',  label: '왼팔',   x: 37, y: 24, w: 11, h: 35 },
+  { name: 'rightLeg', label: '오른다리', x: 12, y: 60, w: 11, h: 36 },
+  { name: 'leftLeg',  label: '왼다리',   x: 25, y: 60, w: 11, h: 36 },
+]
+
+const INIT_PARTS = { head: true, body: true, rightArm: true, leftArm: true, rightLeg: true, leftLeg: true }
 
 export default function SkinViewer3D({ skinCanvas, skinVersion, skinType }) {
   const canvasRef = useRef(null)
   const viewerRef = useRef(null)
   const [rotating, setRotating] = useState(true)
-  const [walking, setWalking] = useState(true)
+  const [walking, setWalking]   = useState(true)
+  const [parts, setParts]       = useState(INIT_PARTS)
 
   useEffect(() => {
     if (!canvasRef.current) return
@@ -38,9 +51,28 @@ export default function SkinViewer3D({ skinCanvas, skinVersion, skinType }) {
     if (!viewer || !skinCanvas) return
     skinCanvas.convertToBlob({ type: 'image/png' }).then((blob) => {
       const url = URL.createObjectURL(blob)
-      viewer.loadSkin(url, { model: skinType === 'slim' ? 'slim' : 'default' }).then(() => URL.revokeObjectURL(url))
+      viewer.loadSkin(url, { model: skinType === 'slim' ? 'slim' : 'default' }).then(() => {
+        URL.revokeObjectURL(url)
+        // 스킨 로드 후 현재 visibility 상태 재적용
+        setParts(prev => {
+          Object.entries(prev).forEach(([name, visible]) => {
+            const obj = viewer.playerObject?.skin?.[name]
+            if (obj) obj.visible = visible
+          })
+          return prev
+        })
+      })
     })
   }, [skinVersion, skinCanvas, skinType])
+
+  const togglePart = useCallback((name) => {
+    setParts(prev => {
+      const next = { ...prev, [name]: !prev[name] }
+      const obj = viewerRef.current?.playerObject?.skin?.[name]
+      if (obj) obj.visible = next[name]
+      return next
+    })
+  }, [])
 
   const toggleRotate = () => {
     const viewer = viewerRef.current
@@ -62,6 +94,26 @@ export default function SkinViewer3D({ skinCanvas, skinVersion, skinType }) {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
+
+      {/* 파츠 토글 SVG — 좌하단 */}
+      <svg
+        viewBox="0 0 48 96"
+        className="viewer-parts"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {PART_DEFS.map(({ name, label, x, y, w, h }) => (
+          <rect
+            key={name}
+            x={x} y={y} width={w} height={h}
+            className={`viewer-part ${parts[name] ? 'on' : 'off'}`}
+            onClick={() => togglePart(name)}
+            rx={1.5}
+          >
+            <title>{label}</title>
+          </rect>
+        ))}
+      </svg>
+
       <div className="viewer-controls">
         <button
           className={`viewer-btn ${walking ? 'active' : ''}`}

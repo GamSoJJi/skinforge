@@ -751,6 +751,23 @@ body.resizing-row { cursor: row-resize !important; user-select: none; }
 .viewer-btn:hover { background: rgba(60,60,60,0.8); }
 .viewer-btn.active { background: var(--accent-dim); border-color: var(--accent-border); }
 
+.viewer-parts {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  width: 32px;
+  cursor: pointer;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+}
+.viewer-part {
+  transition: opacity 0.15s, fill 0.15s;
+  stroke: rgba(255,255,255,0.15);
+  stroke-width: 0.8;
+}
+.viewer-part.on  { fill: rgba(168,169,232,0.55); }
+.viewer-part.off { fill: rgba(80,75,110,0.25); opacity: 0.5; }
+.viewer-part:hover { opacity: 1 !important; fill: rgba(194,195,248,0.75); }
+
 /* ═══════════════════════════════════════
    COLOR REPLACE / SHADE REMAP MODALS
 ═══════════════════════════════════════ */
