@@ -12,7 +12,8 @@ const PART_DEFS = [
   { name: 'leftLeg',  label: '왼다리',   x: 25, y: 60, w: 11, h: 36 },
 ]
 
-const INIT_PARTS = { head: true, body: true, rightArm: true, leftArm: true, rightLeg: true, leftLeg: true }
+const INIT_PARTS    = { head: true, body: true, rightArm: true, leftArm: true, rightLeg: true, leftLeg: true }
+const INIT_OVERLAYS = { head: true, body: true, rightArm: true, leftArm: true, rightLeg: true, leftLeg: true }
 
 export default function SkinViewer3D({ skinCanvas, skinVersion, skinType }) {
   const canvasRef = useRef(null)
@@ -20,6 +21,7 @@ export default function SkinViewer3D({ skinCanvas, skinVersion, skinType }) {
   const [rotating, setRotating] = useState(true)
   const [walking, setWalking]   = useState(true)
   const [parts, setParts]       = useState(INIT_PARTS)
+  const [overlays, setOverlays] = useState(INIT_OVERLAYS)
 
   useEffect(() => {
     if (!canvasRef.current) return
@@ -53,11 +55,17 @@ export default function SkinViewer3D({ skinCanvas, skinVersion, skinType }) {
       const url = URL.createObjectURL(blob)
       viewer.loadSkin(url, { model: skinType === 'slim' ? 'slim' : 'default' }).then(() => {
         URL.revokeObjectURL(url)
-        // 스킨 로드 후 현재 visibility 상태 재적용
         setParts(prev => {
           Object.entries(prev).forEach(([name, visible]) => {
             const obj = viewer.playerObject?.skin?.[name]
             if (obj) obj.visible = visible
+          })
+          return prev
+        })
+        setOverlays(prev => {
+          Object.entries(prev).forEach(([name, visible]) => {
+            const obj = viewer.playerObject?.skin?.[name]
+            if (obj?.outerLayer) obj.outerLayer.visible = visible
           })
           return prev
         })
@@ -70,6 +78,15 @@ export default function SkinViewer3D({ skinCanvas, skinVersion, skinType }) {
       const next = { ...prev, [name]: !prev[name] }
       const obj = viewerRef.current?.playerObject?.skin?.[name]
       if (obj) obj.visible = next[name]
+      return next
+    })
+  }, [])
+
+  const toggleOverlay = useCallback((name) => {
+    setOverlays(prev => {
+      const next = { ...prev, [name]: !prev[name] }
+      const obj = viewerRef.current?.playerObject?.skin?.[name]
+      if (obj?.outerLayer) obj.outerLayer.visible = next[name]
       return next
     })
   }, [])
@@ -95,24 +112,35 @@ export default function SkinViewer3D({ skinCanvas, skinVersion, skinType }) {
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
 
-      {/* 파츠 토글 SVG — 좌하단 */}
-      <svg
-        viewBox="0 0 48 96"
-        className="viewer-parts"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        {PART_DEFS.map(({ name, label, x, y, w, h }) => (
-          <rect
-            key={name}
-            x={x} y={y} width={w} height={h}
-            className={`viewer-part ${parts[name] ? 'on' : 'off'}`}
-            onClick={() => togglePart(name)}
-            rx={1.5}
-          >
-            <title>{label}</title>
-          </rect>
-        ))}
-      </svg>
+      {/* 파츠 토글 — 좌하단 (스킨 / 오버레이 두 실루엣) */}
+      <div className="viewer-parts-wrap">
+        <svg viewBox="0 0 48 96" className="viewer-parts" xmlns="http://www.w3.org/2000/svg">
+          {PART_DEFS.map(({ name, label, x, y, w, h }) => (
+            <rect
+              key={name}
+              x={x} y={y} width={w} height={h}
+              className={`viewer-part ${parts[name] ? 'on' : 'off'}`}
+              onClick={() => togglePart(name)}
+              rx={1.5}
+            >
+              <title>{label}</title>
+            </rect>
+          ))}
+        </svg>
+        <svg viewBox="0 0 48 96" className="viewer-parts" xmlns="http://www.w3.org/2000/svg">
+          {PART_DEFS.map(({ name, label, x, y, w, h }) => (
+            <rect
+              key={name}
+              x={x + 1} y={y + 1} width={w - 2} height={h - 2}
+              className={`viewer-part-ol ${overlays[name] ? 'on' : 'off'}`}
+              onClick={() => toggleOverlay(name)}
+              rx={1.5}
+            >
+              <title>{label} 오버레이</title>
+            </rect>
+          ))}
+        </svg>
+      </div>
 
       <div className="viewer-controls">
         <button
