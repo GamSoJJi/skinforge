@@ -1,3 +1,10 @@
+@font-face {
+  font-family: 'Mulmaru';
+  src: url('./assets/fonts/Mulmaru.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -38,7 +45,7 @@
   --warning-9:  #CEB47E;  --warning-11:  #6F6144;
   --info-9:     #7AABCE;  --info-11:     #4C677A;
 
-  --font-display: 'Silkscreen', monospace;
+  --font-display: 'Pixelify Sans', monospace;
   --font-body:    'Nunito', -apple-system, 'Malgun Gothic', 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
   --text-2xs: 10px;
   --text-xs:  11px;
@@ -145,6 +152,29 @@ body { margin: 0; background: var(--bg); font-family: var(--font-body); color: v
 .lang-btn:hover { background: var(--surface-alt); color: var(--text); }
 .lang-btn.active { background: var(--accent-tint); color: var(--accent); border-color: var(--accent-border); }
 
+.lang-btn[data-tip] { position: relative; }
+.lang-btn[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface-0);
+  color: var(--text);
+  font-size: 0.62rem;
+  font-family: var(--font-body);
+  padding: 3px 7px;
+  border-radius: 6px;
+  border: 1px solid var(--border-mid);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 3px 12px rgba(80, 60, 180, 0.3);
+  opacity: 0;
+  transition: opacity 0.12s;
+  z-index: 9999;
+}
+.lang-btn[data-tip]:hover::after { opacity: 1; }
+
 .theme-btn {
   margin-left: 4px;
   width: 28px;
@@ -162,6 +192,29 @@ body { margin: 0; background: var(--bg); font-family: var(--font-body); color: v
 }
 .theme-btn:hover { background: var(--surface-alt); color: var(--text); }
 
+.theme-btn[data-tip] { position: relative; }
+.theme-btn[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface-0);
+  color: var(--text);
+  font-size: 0.62rem;
+  font-family: var(--font-body);
+  padding: 3px 7px;
+  border-radius: 6px;
+  border: 1px solid var(--border-mid);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 3px 12px rgba(80, 60, 180, 0.3);
+  opacity: 0;
+  transition: opacity 0.12s;
+  z-index: 9999;
+}
+.theme-btn[data-tip]:hover::after { opacity: 1; }
+
 .mc-logo {
   width: 22px;
   height: 22px;
@@ -178,6 +231,10 @@ body { margin: 0; background: var(--bg); font-family: var(--font-body); color: v
   color: var(--accent);
   letter-spacing: 0.5px;
   margin-right: 8px;
+}
+.mc-title-ko {
+  font-family: 'Mulmaru', var(--font-display);
+  letter-spacing: 0;
 }
 
 .mc-nav { display: flex; gap: 1px; }

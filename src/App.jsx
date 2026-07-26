@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect, useRef, lazy, Suspense } from 'react'
-import { Sun, Moon, Square, Circle, FolderOpen, Download, Undo2, Redo2 } from 'lucide-react'
+import { Sun, Moon, Square, Circle, FolderOpen, Download, Undo2, Redo2, MessageSquare } from 'lucide-react'
 const SkinViewer3D = lazy(() => import('./components/SkinViewer3D'))
 import PixelEditor from './components/PixelEditor'
 import ToolPanel from './components/ToolPanel'
@@ -427,12 +427,23 @@ export default function App() {
       {/* ── Menu Bar ── */}
       <header className="ps-menubar">
         <img src="/favicon-32.png" alt="logo" className="mc-logo" />
-        <h1 className="mc-title">SkinForge</h1>
+        <h1 className={`mc-title${lang === 'ko' ? ' mc-title-ko' : ''}`}>
+          {lang === 'ko' ? 'MC스킨따오기' : 'MCSkinPluck'}
+        </h1>
         <div className="lang-toggle">
-          <button className={`lang-btn${lang === 'ko' ? ' active' : ''}`} onClick={() => setLang('ko')}>KO</button>
-          <button className={`lang-btn${lang === 'en' ? ' active' : ''}`} onClick={() => setLang('en')}>EN</button>
+          <button className={`lang-btn${lang === 'ko' ? ' active' : ''}`} onClick={() => setLang('ko')} data-tip="한국어">KO</button>
+          <button className={`lang-btn${lang === 'en' ? ' active' : ''}`} onClick={() => setLang('en')} data-tip="English">EN</button>
         </div>
-        <button className="theme-btn" onClick={() => setDarkMode(v => !v)} title={darkMode ? t.opts.lightMode : t.opts.darkMode}>
+        <a
+          className="theme-btn"
+          href="https://docs.google.com/forms/d/e/1FAIpQLSdcUsndHmB_y6NLjLuKH7QKMkaklh4SAHyDIN1J3IpApGL9jg/viewform?usp=dialog"
+          target="_blank"
+          rel="noopener noreferrer"
+          data-tip={lang === 'ko' ? '피드백 보내기' : 'Send feedback'}
+        >
+          <MessageSquare size={16} strokeWidth={1.5} />
+        </a>
+        <button className="theme-btn" onClick={() => setDarkMode(v => !v)} data-tip={darkMode ? t.opts.lightMode : t.opts.darkMode}>
           {darkMode ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
         </button>
       </header>
