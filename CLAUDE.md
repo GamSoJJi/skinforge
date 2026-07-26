@@ -1,3 +1,8 @@
+## 프로젝트 규칙
+
+- 항상 한국어로 응답할 것
+- 패키지 매니저는 yarn만 사용할 것 (`npm install` 금지)
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
