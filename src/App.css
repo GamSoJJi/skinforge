@@ -45,7 +45,7 @@
   --warning-9:  #CEB47E;  --warning-11:  #6F6144;
   --info-9:     #7AABCE;  --info-11:     #4C677A;
 
-  --font-display: 'Jersey 15', monospace;
+  --font-display: 'Pixelify Sans', monospace;
   --font-body:    'Nunito', -apple-system, 'Malgun Gothic', 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
   --text-2xs: 10px;
   --text-xs:  11px;
@@ -127,7 +127,7 @@ body { margin: 0; background: var(--bg); font-family: var(--font-body); color: v
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  height: 52px;
+  height: 36px;
 }
 
 .lang-toggle {
@@ -216,16 +216,16 @@ body { margin: 0; background: var(--bg); font-family: var(--font-body); color: v
 .theme-btn[data-tip]:hover::after { opacity: 1; }
 
 .mc-logo {
-  width: 38px;
-  height: 38px;
+  width: 22px;
+  height: 22px;
   image-rendering: pixelated;
   margin-right: 8px;
   flex-shrink: 0;
-  opacity: 1;
+  opacity: 0.8;
 }
 
 .mc-title {
-  font-size: var(--text-2xl);
+  font-size: var(--text-lg);
   font-family: var(--font-display);
   font-weight: 400;
   color: var(--accent);
@@ -234,7 +234,6 @@ body { margin: 0; background: var(--bg); font-family: var(--font-body); color: v
 }
 .mc-title-ko {
   font-family: 'Mulmaru', var(--font-display);
-  font-size: var(--text-xl);
   letter-spacing: 0;
 }
 
