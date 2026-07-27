@@ -8,7 +8,7 @@ export const en = {
     colorReplace: 'Replace',
     rectSelect:   'Select',
     magicWand:    'Wand',
-    merge:        'Outfit',
+    merge:        'Pluck',
   },
 
   // ── Options bar
@@ -54,21 +54,21 @@ export const en = {
     skinNoColors:'No colors in skin',
   },
 
-  // ── Outfit merge
+  // ── Pluck
   merge: {
-    title:       'Outfit',
+    title:       'Pluck',
     result:      'Result',
     baseSkin:    'My Skin',
-    outfitSkin:  'Outfit Skin',
+    outfitSkin:  'Pluck Skin',
     load:        'Load',
     change:      'Change',
-    apply:       'Apply',
+    apply:       'Pluck',
     escHint:     'ESC to deselect',
     hintNoA:     'Load your skin first',
-    hintNoB:     'Load an outfit skin',
-    hintNoSel:   'Select a region on the outfit skin',
-    toastNoB:    'Load an outfit skin first',
-    followTip:   'Load an outfit skin',
+    hintNoB:     'Load a skin to pluck from',
+    hintNoSel:   'Select a region on the pluck skin',
+    toastNoB:    'Load a skin to pluck from first',
+    followTip:   'Load a skin to pluck from',
   },
 
   // ── Viewer buttons
@@ -98,10 +98,10 @@ export const en = {
     'Use the icons on the right of the options bar to open or export a skin',
     '⌘Z / Ctrl+Z undoes up to 50 steps — or click the buttons in the options bar',
     'Rect Select (M) limits all drawing to the selected area',
-    'Use Outfit mode to composite two skins together',
+    'Use Pluck mode to composite two skins together',
     'Drag the 3D viewer border to resize it',
     'Click the tolerance number in Shade mode to type a value directly',
-    'In Outfit mode, press ESC to clear your selection',
+    'In Pluck mode, press ESC to clear your selection',
     'Use the button next to the skin panel title to swap skins',
   ],
 }
