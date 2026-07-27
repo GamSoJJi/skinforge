@@ -426,7 +426,7 @@ export default function App() {
 
       {/* ── Menu Bar ── */}
       <header className="ps-menubar">
-        <img src="/favicon-32.png" alt="logo" className="mc-logo" />
+        <img src="/logo.png" alt="logo" className="mc-logo" />
         <h1 className={`mc-title${lang === 'ko' ? ' mc-title-ko' : ''}`}>
           {lang === 'ko' ? 'MC스킨따오기' : 'MCSkinPluck'}
         </h1>
