@@ -96,6 +96,12 @@ export default function App() {
     localStorage.setItem('theme', darkMode ? 'dark' : 'light')
   }, [darkMode])
 
+  useEffect(() => {
+    document.title = lang === 'ko'
+      ? 'MC스킨따오기 — 마인크래프트 스킨 에디터'
+      : 'MCSkinPluck — Minecraft Skin Editor'
+  }, [lang])
+
 
   const addToHistory = useCallback((newColor) => {
     if (!newColor || newColor.length !== 7) return
