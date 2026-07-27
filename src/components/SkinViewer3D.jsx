@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import * as skinview3d from 'skinview3d'
 import { Footprints, PersonStanding, RotateCw, Image, ImageOff } from 'lucide-react'
-import viewerBg from '../assets/viewer-background.png'
+import viewerBg from '../assets/viewer-background.webp'
 import { useLang } from '../i18n/LangContext.jsx'
 
 // Minecraft 비율 기준 (3배 스케일): viewBox 48×96
