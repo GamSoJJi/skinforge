@@ -169,6 +169,12 @@ function MiniCanvas({ skinCanvas, selection, onSelectionChange, activeTool, selM
     const cv = skinRef.current; if (!cv) return
     const ctx = cv.getContext('2d')
     ctx.clearRect(0, 0, MINI, MINI)
+    ctx.fillStyle = 'rgba(255,255,255,0.13)'
+    ctx.fillRect(0, 0, MINI, MINI)
+    ctx.fillStyle = 'rgba(0,0,0,0.06)'
+    for (let y = 0; y < 64; y++)
+      for (let x = 0; x < 64; x++)
+        if ((x + y) % 2 === 0) ctx.fillRect(x * MS, y * MS, MS, MS)
     if (skinCanvas) {
       ctx.imageSmoothingEnabled = false
       ctx.drawImage(skinCanvas, 0, 0, MINI, MINI)
@@ -206,25 +212,9 @@ function MiniCanvas({ skinCanvas, selection, onSelectionChange, activeTool, selM
     }
   }, [onSelectionChange])
 
-  const handleMouseDown = useCallback((e) => {
-    if (!skinCanvas || e.button !== 0) return
-    e.preventDefault()
-    selModeRef.current = e.shiftKey ? 'union' : e.altKey ? 'diff' : selModePropsRef.current
-    isDragging.current = false
-    const [x, y] = getCoords(e)
-    dragStart.current = { x, y }
-  }, [skinCanvas, getCoords, onSelectionChange])
-
-  const handleMouseMove = useCallback((e) => {
-    if (!dragStart.current || activeTool !== 'rect') return
-    const [px, py] = getCoords(e)
-    if (!isDragging.current &&
-        (Math.abs(px - dragStart.current.x) > 0 || Math.abs(py - dragStart.current.y) > 0)) {
-      isDragging.current = true
-    }
-    if (!isDragging.current) return
-    const { x: sx, y: sy } = dragStart.current
-    const ctx = selRef.current.getContext('2d')
+  const drawRectPreview = useCallback((sx, sy, ex, ey) => {
+    const ctx = selRef.current?.getContext('2d')
+    if (!ctx) return
     ctx.clearRect(0, 0, MINI, MINI)
     const cur = selRef_.current
     if (cur && cur.size > 0) {
@@ -234,26 +224,60 @@ function MiniCanvas({ skinCanvas, selection, onSelectionChange, activeTool, selM
       ctx.lineDashOffset = 4; ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.stroke(path)
       ctx.setLineDash([]); ctx.lineDashOffset = 0
     }
-    const rx = Math.min(sx,px)*MS, ry = Math.min(sy,py)*MS
-    const rw = (Math.abs(px-sx)+1)*MS, rh = (Math.abs(py-sy)+1)*MS
+    const rx = Math.min(sx,ex)*MS, ry = Math.min(sy,ey)*MS
+    const rw = (Math.abs(ex-sx)+1)*MS, rh = (Math.abs(ey-sy)+1)*MS
     ctx.lineWidth = 1.2; ctx.setLineDash([4, 3])
     ctx.strokeStyle = 'rgba(255,255,255,0.95)'; ctx.strokeRect(rx, ry, rw, rh)
     ctx.lineDashOffset = 4; ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.strokeRect(rx, ry, rw, rh)
     ctx.setLineDash([]); ctx.lineDashOffset = 0
-  }, [activeTool, getCoords])
+  }, [])
+
+  const handleMouseDown = useCallback((e) => {
+    if (!skinCanvas || e.button !== 0) return
+    e.preventDefault()
+    selModeRef.current = e.shiftKey ? 'union' : e.altKey ? 'diff' : selModePropsRef.current
+    isDragging.current = false
+    const [x, y] = getCoords(e)
+    dragStart.current = { x, y }
+
+    if (activeTool === 'rect') {
+      const finishRect = (ev) => {
+        window.removeEventListener('mouseup', finishRect)
+        window.removeEventListener('mousemove', trackRect)
+        if (!dragStart.current || !isDragging.current) { dragStart.current = null; return }
+        const [ex, ey] = getCoords(ev)
+        const { x: sx, y: sy } = dragStart.current
+        dragStart.current = null; isDragging.current = false
+        const newSel = new Set()
+        for (let ry = Math.min(sy,ey); ry <= Math.max(sy,ey); ry++)
+          for (let rx = Math.min(sx,ex); rx <= Math.max(sx,ex); rx++)
+            newSel.add(ry*64+rx)
+        applyMode(newSel, selModeRef.current)
+      }
+      const trackRect = (ev) => {
+        if (!dragStart.current) return
+        const [ex, ey] = getCoords(ev)
+        if (!isDragging.current &&
+            (Math.abs(ex - dragStart.current.x) > 0 || Math.abs(ey - dragStart.current.y) > 0)) {
+          isDragging.current = true
+        }
+        if (isDragging.current) drawRectPreview(dragStart.current.x, dragStart.current.y, ex, ey)
+      }
+      window.addEventListener('mouseup', finishRect)
+      window.addEventListener('mousemove', trackRect)
+    }
+  }, [skinCanvas, activeTool, getCoords, applyMode, drawRectPreview])
+
+  const handleMouseMove = useCallback((e) => {
+    // rect drag is handled by window listeners; only wand hover needs local tracking
+  }, [])
 
   const handleMouseUp = useCallback((e) => {
     if (e.button !== 0 || !dragStart.current) return
+    if (activeTool === 'rect') return // handled by window listener
     const [px, py] = getCoords(e)
     const mode = selModeRef.current
-    if (activeTool === 'rect' && isDragging.current) {
-      const { x: sx, y: sy } = dragStart.current
-      const newSel = new Set()
-      for (let y = Math.min(sy,py); y <= Math.max(sy,py); y++)
-        for (let x = Math.min(sx,px); x <= Math.max(sx,px); x++)
-          newSel.add(y*64+x)
-      applyMode(newSel, mode)
-    } else if (skinCanvas) {
+    if (skinCanvas) {
       const imgData = skinCanvas.getContext('2d').getImageData(0, 0, 64, 64)
       applyMode(
         activeTool === 'wand' ? magicWand(imgData, px, py, contiguousRef.current) : new Set([py*64+px]),
@@ -264,11 +288,13 @@ function MiniCanvas({ skinCanvas, selection, onSelectionChange, activeTool, selM
   }, [activeTool, getCoords, skinCanvas, applyMode])
 
   const handleMouseLeave = useCallback(() => {
+    // rect drag continues via window listeners — don't reset state
+    if (activeTool === 'rect' && isDragging.current) return
     if (isDragging.current) {
       drawStaticSel(selRef.current?.getContext('2d'), selRef_.current, MS)
     }
     dragStart.current = null; isDragging.current = false
-  }, [])
+  }, [activeTool])
 
   const cursor = readOnly ? 'not-allowed' : !skinCanvas ? 'default' : activeTool === 'wand' ? 'cell' : 'crosshair'
 
@@ -305,9 +331,13 @@ function ResultCanvas({ merged }) {
     const cv = canvasRef.current; if (!cv) return
     const ctx = cv.getContext('2d')
     ctx.clearRect(0, 0, RESULT, RESULT)
-    if (!merged) {
-      // transparent — CSS background shows through
-    } else {
+    ctx.fillStyle = 'rgba(255,255,255,0.13)'
+    ctx.fillRect(0, 0, RESULT, RESULT)
+    ctx.fillStyle = 'rgba(0,0,0,0.06)'
+    for (let y = 0; y < 64; y++)
+      for (let x = 0; x < 64; x++)
+        if ((x + y) % 2 === 0) ctx.fillRect(x * RS, y * RS, RS, RS)
+    if (merged) {
       ctx.imageSmoothingEnabled = false
       ctx.drawImage(merged, 0, 0, RESULT, RESULT)
     }
@@ -319,7 +349,10 @@ function ResultCanvas({ merged }) {
       <div style={{ width: RESULT*zoom, height: RESULT*zoom, position: 'relative', flexShrink: 0, margin: 'auto' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, width: RESULT, height: RESULT, transformOrigin: '0 0', transform: `scale(${zoom})` }}>
           <canvas ref={canvasRef} width={RESULT} height={RESULT}
-            style={{ display: 'block', imageRendering: 'pixelated', cursor: 'not-allowed' }} />
+            style={{ display: 'block', imageRendering: 'pixelated', cursor: 'not-allowed',
+              backgroundImage: 'linear-gradient(45deg,rgba(0,0,0,0.12) 25%,transparent 25%),linear-gradient(-45deg,rgba(0,0,0,0.12) 25%,transparent 25%),linear-gradient(45deg,transparent 75%,rgba(0,0,0,0.12) 75%),linear-gradient(-45deg,transparent 75%,rgba(0,0,0,0.12) 75%)',
+              backgroundSize: `${RS*2}px ${RS*2}px`,
+              backgroundPosition: `0 0, 0 ${RS}px, ${RS}px -${RS}px, -${RS}px 0` }} />
         </div>
       </div>
     </div>

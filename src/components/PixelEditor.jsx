@@ -491,6 +491,27 @@ export default function PixelEditor({
       if (selAnimRef.current) cancelAnimationFrame(selAnimRef.current)
       rectStartRef.current = { x: px, y: py }
       drawRectPreview(px, py, px, py)
+
+      const finishRect = (ev) => {
+        window.removeEventListener('mouseup', finishRect)
+        window.removeEventListener('mousemove', trackRect)
+        if (!rectStartRef.current) return
+        const [ex, ey] = getPixelCoords(ev)
+        const { x: sx, y: sy } = rectStartRef.current
+        rectStartRef.current = null
+        const newSel = new Set()
+        for (let ry = Math.min(sy, ey); ry <= Math.max(sy, ey); ry++)
+          for (let rx = Math.min(sx, ex); rx <= Math.max(sx, ex); rx++)
+            newSel.add(ry * 64 + rx)
+        onSelectionChange(applySelectionMode(newSel, selModeRef.current, selectionRef.current))
+      }
+      const trackRect = (ev) => {
+        if (!rectStartRef.current) return
+        const [ex, ey] = getPixelCoords(ev)
+        drawRectPreview(rectStartRef.current.x, rectStartRef.current.y, ex, ey)
+      }
+      window.addEventListener('mouseup', finishRect)
+      window.addEventListener('mousemove', trackRect)
       return
     }
 
