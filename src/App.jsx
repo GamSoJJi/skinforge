@@ -1,4 +1,5 @@
 import { useCallback, useState, useEffect, useRef, lazy, Suspense } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import { Sun, Moon, Square, Circle, FolderOpen, Download, Undo2, Redo2, MessageSquare } from 'lucide-react'
 const SkinViewer3D = lazy(() => import('./components/SkinViewer3D'))
 import PixelEditor from './components/PixelEditor'
@@ -694,6 +695,7 @@ export default function App() {
       </div>
     )}
 
+    <Analytics />
     </>
   )
 }
