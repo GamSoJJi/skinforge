@@ -1042,6 +1042,8 @@ body.picking-color { cursor: crosshair !important; }
   width: 100%;
   background: var(--canvas-void);
 }
+.merge-skin-bg { background: #e8e8e8; }
+[data-theme="dark"] .merge-skin-bg { background: transparent; }
 .merge-divider { width: 1px; background: var(--border); flex-shrink: 0; }
 .merge-section-label { font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.3px; flex-shrink: 0; }
 .merge-dot-a { color: rgba(80,150,255,0.9); }

@@ -302,7 +302,7 @@ function MiniCanvas({ skinCanvas, selection, onSelectionChange, activeTool, selM
     <div ref={scrollRef} className="merge-canvas-scroll">
       <div style={{ width: MINI*zoom, height: MINI*zoom, position: 'relative', flexShrink: 0, margin: 'auto' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, width: MINI, height: MINI, transformOrigin: '0 0', transform: `scale(${zoom})` }}>
-          <div style={{ position: 'relative', width: MINI, height: MINI }}>
+          <div className="merge-skin-bg" style={{ position: 'relative', width: MINI, height: MINI }}>
             <canvas ref={skinRef} width={MINI} height={MINI}
               style={{ position: 'absolute', top: 0, left: 0, imageRendering: 'pixelated' }} />
             <canvas ref={selRef} width={MINI} height={MINI}
@@ -348,7 +348,7 @@ function ResultCanvas({ merged }) {
     <div ref={scrollRef} className="merge-canvas-scroll">
       <div style={{ width: RESULT*zoom, height: RESULT*zoom, position: 'relative', flexShrink: 0, margin: 'auto' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, width: RESULT, height: RESULT, transformOrigin: '0 0', transform: `scale(${zoom})` }}>
-          <canvas ref={canvasRef} width={RESULT} height={RESULT}
+          <canvas ref={canvasRef} width={RESULT} height={RESULT} className="merge-skin-bg"
             style={{ display: 'block', imageRendering: 'pixelated', cursor: 'not-allowed',
               backgroundImage: 'linear-gradient(45deg,rgba(0,0,0,0.12) 25%,transparent 25%),linear-gradient(-45deg,rgba(0,0,0,0.12) 25%,transparent 25%),linear-gradient(45deg,transparent 75%,rgba(0,0,0,0.12) 75%),linear-gradient(-45deg,transparent 75%,rgba(0,0,0,0.12) 75%)',
               backgroundSize: `${RS*2}px ${RS*2}px`,

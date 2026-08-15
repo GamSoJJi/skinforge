@@ -562,7 +562,7 @@ export default function App() {
                 onMouseEnter={(e) => showOptTip(e, m.shortcut ? `${m.label}  ${m.shortcut}` : m.label)}
                 onMouseLeave={hideOptTip}
               >
-                {m.icon}
+                {m.icon} {m.label}
               </button>
             ))}
             {activeTool === 'magic-wand' && (
