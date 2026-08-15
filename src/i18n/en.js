@@ -9,6 +9,7 @@ export const en = {
     rectSelect:   'Select',
     magicWand:    'Wand',
     merge:        'Pluck',
+    symmetry:     'Mirror Stamp',
   },
 
   // ── Options bar
@@ -42,6 +43,10 @@ export const en = {
     tolDown:     'Decrease tolerance',
     tolUp:       'Increase tolerance',
     selClear:    'Deselect',
+    symLmb:      'LMB',
+    symRmb:      'RMB',
+    symLtr:      'stamp left side → right',
+    symRtl:      'stamp right side → left',
   },
 
   // ── Panels

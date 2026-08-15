@@ -9,6 +9,7 @@ export const ko = {
     rectSelect:   '사각선택',
     magicWand:    '마법봉',
     merge:        '따오기',
+    symmetry:     '대칭 찍기',
   },
 
   // ── 옵션 바
@@ -42,6 +43,10 @@ export const ko = {
     tolDown:     '허용치 감소',
     tolUp:       '허용치 증가',
     selClear:    '선택해제',
+    symLmb:      '좌클릭',
+    symRmb:      '우클릭',
+    symLtr:      '왼쪽을 기준으로 대칭',
+    symRtl:      '오른쪽을 기준으로 대칭',
   },
 
   // ── 패널

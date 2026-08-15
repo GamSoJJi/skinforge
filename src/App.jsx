@@ -9,6 +9,7 @@ import SkinMergeModal from './components/SkinMergeModal'
 import TipBanner from './components/TipBanner'
 import { inferModelType } from 'skinview-utils'
 import { useLang } from './i18n/LangContext.jsx'
+import { getHoverGroup, applyPartSymmetry, copyPartMirrored } from './utils/symmetry'
 import './App.css'
 
 function hexToRgb(hex) {
@@ -410,6 +411,25 @@ export default function App() {
     window.addEventListener('mouseup', onUp)
   }, [])
 
+  const handleSymmetryApply = useCallback((px, py, direction) => {
+    const group = getHoverGroup(px, py, skinType)
+    if (!group) return
+    pushUndo()
+    const ctx = skinCanvas.getContext('2d')
+    const imageData = ctx.getImageData(0, 0, 64, 64)
+    if (group.isPair) {
+      // 좌클릭(ltr): 왼쪽 파트 → 오른쪽 파트, 우클릭(rtl): 반대
+      const [src, dst] = direction === 'ltr'
+        ? [group.leftPart, group.rightPart]
+        : [group.rightPart, group.leftPart]
+      copyPartMirrored(imageData, src, dst)
+    } else {
+      applyPartSymmetry(imageData, group.part, direction)
+    }
+    ctx.putImageData(imageData, 0, 0)
+    setSkinVersion(v => v + 1)
+  }, [skinCanvas, skinType, pushUndo])
+
   const effectiveSelMode = shiftHeld ? 'union' : altHeld ? 'diff' : selMode
   const handleToolChange = useCallback((toolId) => {
     if (toolId === 'merge') {
@@ -425,6 +445,7 @@ export default function App() {
   const showBrushOpts = !mergeOpen && (activeTool === 'pen' || activeTool === 'eraser')
   const showSelOpts = activeTool === 'rect-select' || activeTool === 'magic-wand'
   const showColorReplaceOpts = !mergeOpen && activeTool === 'color-replace'
+  const showSymmetryOpts = !mergeOpen && activeTool === 'symmetry'
   const hasSelectionActive = mergeOpen ? mergeHasSel : selection !== null
 
   return (
@@ -522,6 +543,13 @@ export default function App() {
                   className="opt-shade-slider" />
               </>
             )}
+          </div>
+        )}
+        {showSymmetryOpts && (
+          <div className="opt-group">
+            <span className="opt-hint"><kbd>{t.opts.symLmb}</kbd> {t.opts.symLtr}</span>
+            <div className="opt-divider" />
+            <span className="opt-hint"><kbd>{t.opts.symRmb}</kbd> {t.opts.symRtl}</span>
           </div>
         )}
         {showSelOpts && (
@@ -635,6 +663,7 @@ export default function App() {
                   wandTolerance={wandTolerance}
                   selMode={selMode}
                   shadePreview={null}
+                  onSymmetryApply={handleSymmetryApply}
                 />
                 <TipBanner />
               </>

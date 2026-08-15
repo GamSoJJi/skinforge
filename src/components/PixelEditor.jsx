@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { getSkinLayout } from '../utils/skinLayout'
+import { getHoverGroup, getPartFaceRects } from '../utils/symmetry'
 import { useLang } from '../i18n/LangContext.jsx'
 
 const SCALE = 16
@@ -140,7 +141,7 @@ export default function PixelEditor({
   brushSize, brushShape, skinType, showGuide,
   selection, onSelectionChange, contiguous, wandTolerance, selMode,
   modalPickingSlot, onModalColorPick,
-  shadePreview,
+  shadePreview, onSymmetryApply,
 }) {
   const { lang } = useLang()
   const canvasRef = useRef(null)
@@ -346,9 +347,25 @@ export default function PixelEditor({
       const ox = cx + 6, oy = cy + 6, s = 7
       ctx.fillStyle = 'rgba(0,0,0,0.65)'; ctx.fillRect(ox - 1, oy - 1, s + 2, s + 2)
       ctx.fillStyle = activeColorRef.current; ctx.fillRect(ox, oy, s, s)
+    } else if (activeTool === 'symmetry') {
+      const group = getHoverGroup(mx, my, skinType)
+      if (group) {
+        const allRects = group.parts.flatMap(p => getPartFaceRects(p))
+        ctx.setLineDash([Math.round(sz * 0.3), Math.round(sz * 0.3)])
+        for (const r of allRects) {
+          const { x: rx, y: ry } = toScreen(r.x, r.y)
+          const rw = r.w * sz, rh = r.h * sz
+          ctx.fillStyle = 'rgba(100, 180, 255, 0.18)'
+          ctx.fillRect(rx, ry, rw, rh)
+          ctx.strokeStyle = 'rgba(60, 140, 255, 0.9)'
+          ctx.lineWidth = 1.5
+          ctx.strokeRect(rx + 0.75, ry + 0.75, rw - 1.5, rh - 1.5)
+        }
+        ctx.setLineDash([])
+      }
     }
     // rect-select and magic-wand use CSS cursor (no canvas drawing)
-  }, [activeTool, brushSize, brushShape])
+  }, [activeTool, brushSize, brushShape, skinType])
 
   // ── Selection overlay (marching ants) ────────────────────────────
   const drawSelectionOverlay = useCallback((sel, preview) => {
@@ -473,6 +490,14 @@ export default function PixelEditor({
   }, [skinCanvas, activeTool, activeColor, onColorPicked, onColorReplace, onPixelChange, redrawSkin, brushSize, brushShape, getPixelCoords])
 
   const handleMouseDown = useCallback((e) => {
+    if (activeTool === 'symmetry') {
+      if (e.button !== 0 && e.button !== 2) return
+      const [px, py, inBounds] = getPixelCoords(e)
+      if (!inBounds) return
+      onSymmetryApply(px, py, e.button === 2 ? 'rtl' : 'ltr')
+      return
+    }
+
     if (e.button !== 0) return
 
     const [px, py, inBounds] = getPixelCoords(e)
@@ -533,6 +558,19 @@ export default function PixelEditor({
 
   const handleMouseMove = useCallback((e) => {
     const [px, py, inBounds] = getPixelCoords(e)
+
+    if (activeTool === 'symmetry') {
+      if (!inBounds) {
+        const c = cursorRef.current
+        if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height)
+        if (outerRef.current) outerRef.current.style.cursor = 'default'
+        return
+      }
+      if (outerRef.current) outerRef.current.style.cursor = 'crosshair'
+      lastPixelPos.current = [px, py]
+      redrawCursor(px, py, null)
+      return
+    }
 
     if (activeTool === 'rect-select') {
       if (rectStartRef.current) {
@@ -654,7 +692,8 @@ export default function PixelEditor({
   cursorStyleRef.current =
     activeTool === 'rect-select'   ? 'crosshair' :
     activeTool === 'color-replace' ? 'crosshair' :
-    activeTool === 'magic-wand'    ? 'cell' : 'none'
+    activeTool === 'magic-wand'    ? 'cell' :
+    activeTool === 'symmetry'      ? 'crosshair' : 'none'
 
   useEffect(() => {
     if (outerRef.current) outerRef.current.style.cursor = cursorStyleRef.current
@@ -668,6 +707,7 @@ export default function PixelEditor({
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave}
+      onContextMenu={e => e.preventDefault()}
     >
       {/* Scroll container: absolute-fills the outer wrapper */}
       <div className="pixel-editor-scroll" ref={scrollRef} style={{ position: 'absolute', inset: 0, overflow: 'auto' }}>
