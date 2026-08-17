@@ -87,6 +87,8 @@ export const ko = {
     hintNoSel:   '따올 스킨에서 영역을 선택하세요',
     toastNoB:    '따올 스킨을 불러오세요',
     followTip:   '따올 스킨을 불러오세요',
+    selArea:     '영역 선택',
+    selPart:     '파츠 선택',
   },
 
   // ── 뷰어 버튼

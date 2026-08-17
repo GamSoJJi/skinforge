@@ -87,6 +87,8 @@ export const en = {
     hintNoSel:   'Select a region on the pluck skin',
     toastNoB:    'Load a skin to pluck from first',
     followTip:   'Load a skin to pluck from',
+    selArea:     'Area select',
+    selPart:     'Part select',
   },
 
   // ── Viewer buttons

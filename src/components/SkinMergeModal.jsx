@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { useLang } from '../i18n/LangContext.jsx'
+import { getPartAt, getPartFaceRects, getParts } from '../utils/symmetry'
 
 const MS = 3           // mini scale (pixel per skin-pixel)
 const MINI = 64 * MS   // 192
@@ -149,9 +150,10 @@ function useZoomPan(scrollRef, contentSize) {
 
 // ── MiniCanvas ───────────────────────────────────────────────────────────────
 
-function MiniCanvas({ skinCanvas, selection, onSelectionChange, activeTool, selMode, contiguous, readOnly = false }) {
+function MiniCanvas({ skinCanvas, selection, onSelectionChange, activeTool, selMode, contiguous, readOnly = false, partSelectMode = false, skinType = 'normal' }) {
   const scrollRef = useRef(null)
   const skinRef   = useRef(null)
+  const guideRef  = useRef(null)
   const selRef    = useRef(null)
   const dragStart = useRef(null)
   const isDragging = useRef(false)
@@ -162,6 +164,7 @@ function MiniCanvas({ skinCanvas, selection, onSelectionChange, activeTool, selM
   useEffect(() => { selModePropsRef.current = selMode || 'replace' }, [selMode])
   const contiguousRef = useRef(contiguous)
   contiguousRef.current = contiguous
+  const hoveredGroupRef = useRef(null)
 
   const zoom = useZoomPan(scrollRef, MINI)
 
@@ -186,6 +189,34 @@ function MiniCanvas({ skinCanvas, selection, onSelectionChange, activeTool, selM
     const cv = selRef.current; if (!cv) return
     drawStaticSel(cv.getContext('2d'), selection, MS)
   }, [selection])
+
+  const redrawGuide = useCallback((hoveredPart) => {
+    const cv = guideRef.current; if (!cv) return
+    const ctx = cv.getContext('2d')
+    ctx.clearRect(0, 0, MINI, MINI)
+    if (!partSelectMode) return
+
+    ctx.lineWidth = 0.5
+    ctx.setLineDash([])
+    for (const part of getParts(skinType)) {
+      ctx.strokeStyle = 'rgba(114, 80, 192, 0.4)'
+      for (const r of getPartFaceRects(part)) {
+        ctx.strokeRect(r.x * MS, r.y * MS, r.w * MS, r.h * MS)
+      }
+    }
+
+    if (hoveredPart) {
+      for (const r of getPartFaceRects(hoveredPart)) {
+        ctx.fillStyle = 'rgba(80, 140, 255, 0.22)'
+        ctx.fillRect(r.x * MS, r.y * MS, r.w * MS, r.h * MS)
+        ctx.strokeStyle = 'rgba(80, 140, 255, 0.9)'
+        ctx.lineWidth = 1
+        ctx.strokeRect(r.x * MS + 0.5, r.y * MS + 0.5, r.w * MS - 1, r.h * MS - 1)
+      }
+    }
+  }, [partSelectMode, skinType])
+
+  useEffect(() => { redrawGuide(hoveredGroupRef.current) }, [redrawGuide])
 
   const getCoords = useCallback((e) => {
     const rect = selRef.current.getBoundingClientRect()
@@ -240,6 +271,8 @@ function MiniCanvas({ skinCanvas, selection, onSelectionChange, activeTool, selM
     const [x, y] = getCoords(e)
     dragStart.current = { x, y }
 
+    if (partSelectMode) return  // part-click handled in mouseUp
+
     if (activeTool === 'rect') {
       const finishRect = (ev) => {
         window.removeEventListener('mouseup', finishRect)
@@ -266,14 +299,36 @@ function MiniCanvas({ skinCanvas, selection, onSelectionChange, activeTool, selM
       window.addEventListener('mouseup', finishRect)
       window.addEventListener('mousemove', trackRect)
     }
-  }, [skinCanvas, activeTool, getCoords, applyMode, drawRectPreview])
+  }, [skinCanvas, activeTool, partSelectMode, getCoords, applyMode, drawRectPreview])
 
   const handleMouseMove = useCallback((e) => {
-    // rect drag is handled by window listeners; only wand hover needs local tracking
-  }, [])
+    if (!partSelectMode || !skinCanvas) return
+    const [px, py] = getCoords(e)
+    const part = getPartAt(px, py, skinType)
+    hoveredGroupRef.current = part
+    redrawGuide(part)
+  }, [partSelectMode, skinCanvas, getCoords, skinType, redrawGuide])
 
   const handleMouseUp = useCallback((e) => {
     if (e.button !== 0 || !dragStart.current) return
+
+    if (partSelectMode && skinCanvas) {
+      const [px, py] = getCoords(e)
+      const mode = selModeRef.current
+      const part = getPartAt(px, py, skinType)
+      if (part) {
+        const newSel = new Set()
+        for (const r of getPartFaceRects(part)) {
+          for (let y = r.y; y < r.y + r.h; y++)
+            for (let x = r.x; x < r.x + r.w; x++)
+              newSel.add(y * 64 + x)
+        }
+        applyMode(newSel, mode)
+      }
+      dragStart.current = null; isDragging.current = false
+      return
+    }
+
     if (activeTool === 'rect') return // handled by window listener
     const [px, py] = getCoords(e)
     const mode = selModeRef.current
@@ -285,18 +340,26 @@ function MiniCanvas({ skinCanvas, selection, onSelectionChange, activeTool, selM
       )
     }
     dragStart.current = null; isDragging.current = false
-  }, [activeTool, getCoords, skinCanvas, applyMode])
+  }, [activeTool, partSelectMode, getCoords, skinCanvas, skinType, applyMode])
 
   const handleMouseLeave = useCallback(() => {
-    // rect drag continues via window listeners — don't reset state
+    if (partSelectMode) {
+      hoveredGroupRef.current = null
+      redrawGuide(null)
+      dragStart.current = null; isDragging.current = false
+      return
+    }
     if (activeTool === 'rect' && isDragging.current) return
     if (isDragging.current) {
       drawStaticSel(selRef.current?.getContext('2d'), selRef_.current, MS)
     }
     dragStart.current = null; isDragging.current = false
-  }, [activeTool])
+  }, [partSelectMode, redrawGuide, activeTool])
 
-  const cursor = readOnly ? 'not-allowed' : !skinCanvas ? 'default' : activeTool === 'wand' ? 'cell' : 'crosshair'
+  const cursor = readOnly ? 'not-allowed'
+    : partSelectMode ? (skinCanvas ? 'pointer' : 'default')
+    : !skinCanvas ? 'default'
+    : activeTool === 'wand' ? 'cell' : 'crosshair'
 
   return (
     <div ref={scrollRef} className="merge-canvas-scroll">
@@ -305,6 +368,8 @@ function MiniCanvas({ skinCanvas, selection, onSelectionChange, activeTool, selM
           <div className="merge-skin-bg" style={{ position: 'relative', width: MINI, height: MINI }}>
             <canvas ref={skinRef} width={MINI} height={MINI}
               style={{ position: 'absolute', top: 0, left: 0, imageRendering: 'pixelated' }} />
+            <canvas ref={guideRef} width={MINI} height={MINI}
+              style={{ position: 'absolute', top: 0, left: 0, imageRendering: 'pixelated', pointerEvents: 'none' }} />
             <canvas ref={selRef} width={MINI} height={MINI}
               style={{ position: 'absolute', top: 0, left: 0, cursor }}
               onMouseDown={readOnly ? undefined : handleMouseDown}
@@ -361,7 +426,7 @@ function ResultCanvas({ merged }) {
 
 // ── SkinMergeModal ────────────────────────────────────────────────────────────
 
-export default function SkinMergeModal({ onClose, onMerge, initialSkinA, activeTool, selMode, contiguous, onMergedChange, onHasSelChange, clearSelRef }) {
+export default function SkinMergeModal({ onClose, onMerge, initialSkinA, activeTool, selMode, contiguous, onMergedChange, onHasSelChange, clearSelRef, skinType = 'normal', partSelectMode = false }) {
   const { t } = useLang()
   const [skinA, setSkinA] = useState(() => {
     if (!initialSkinA) return null
@@ -433,22 +498,18 @@ export default function SkinMergeModal({ onClose, onMerge, initialSkinA, activeT
     setMerged(out)
   }, [skinA, skinB, selB])
 
-  // Notify App of merged canvas for 3D viewer
   useEffect(() => { onMergedChange?.(merged) }, [merged, onMergedChange])
 
-  // Notify App whether any selection exists (for ToolPanel clear button)
   useEffect(() => {
     onHasSelChange?.(selA !== null || selB !== null)
   }, [selA, selB, onHasSelChange])
 
-  // Expose clear function so ToolPanel's 선택해제 can clear both A and B
   useEffect(() => {
     if (!clearSelRef) return
     clearSelRef.current = () => { setSelA(null); setSelB(null) }
     return () => { clearSelRef.current = null }
   }, [clearSelRef])
 
-  // Top/bottom resize (result vs A+B panels)
   const handleTBResizeStart = useCallback((e) => {
     e.preventDefault()
     const container = mergeViewRef.current; if (!container) return
@@ -469,7 +530,6 @@ export default function SkinMergeModal({ onClose, onMerge, initialSkinA, activeT
     window.addEventListener('mouseup', onUp)
   }, [setTbSplit])
 
-  // Left/right resize (skin A vs skin B panels)
   const handleABResizeStart = useCallback((e) => {
     e.preventDefault()
     const container = mergeBottomRef.current; if (!container) return
@@ -552,7 +612,8 @@ export default function SkinMergeModal({ onClose, onMerge, initialSkinA, activeT
               onChange={(e) => { const f=e.target.files?.[0]; if(f){loadSkinFile(f,setSkinB);setSelB(null)} e.target.value='' }} />
           </div>
           <MiniCanvas skinCanvas={skinB} selection={selB} onSelectionChange={updateSelB}
-            activeTool={mergeActiveTool} selMode={selMode} contiguous={contiguous} />
+            activeTool={mergeActiveTool} selMode={selMode} contiguous={contiguous}
+            partSelectMode={partSelectMode} skinType={skinType} />
         </div>
       </div>
 

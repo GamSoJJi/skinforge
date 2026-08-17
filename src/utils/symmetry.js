@@ -189,7 +189,7 @@ export function getParts(skinType) {
     : [...SHARED_PARTS, ...ARM_PARTS_NORMAL]
 }
 
-function getPartAt(px, py, skinType) {
+export function getPartAt(px, py, skinType) {
   for (const part of getParts(skinType)) {
     for (const face of part.faces) {
       if (face.type === 'self' && inRect(px, py, face.f)) return part

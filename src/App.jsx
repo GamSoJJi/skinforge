@@ -1,6 +1,6 @@
 import { useCallback, useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { Analytics } from '@vercel/analytics/react'
-import { Sun, Moon, Square, Circle, FolderOpen, Download, Undo2, Redo2, MessageSquare } from 'lucide-react'
+import { Sun, Moon, Square, Circle, FolderOpen, Download, Undo2, Redo2, MessageSquare, SquareDashed, Layers } from 'lucide-react'
 const SkinViewer3D = lazy(() => import('./components/SkinViewer3D'))
 import PixelEditor from './components/PixelEditor'
 import ToolPanel from './components/ToolPanel'
@@ -79,6 +79,7 @@ export default function App() {
   const [uploadCount, setUploadCount] = useState(0)
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark')
   const [mergeOpen, setMergeOpen] = useState(false)
+  const [partSelectMode, setPartSelectMode] = useState(false)
   const [mergedPreview, setMergedPreview] = useState(null)
   const [mergeVersion, setMergeVersion] = useState(0)
   const [mergeHasSel, setMergeHasSel] = useState(false)
@@ -554,6 +555,21 @@ export default function App() {
         )}
         {showSelOpts && (
           <div className="opt-group">
+            {mergeOpen && (
+              <>
+                <button className={`mc-btn opt-btn${!partSelectMode ? ' active' : ''}`}
+                  onClick={() => setPartSelectMode(false)}
+                  onMouseEnter={(e) => showOptTip(e, t.merge.selArea)} onMouseLeave={hideOptTip}>
+                  <SquareDashed size={11} strokeWidth={2} /> {t.merge.selArea}
+                </button>
+                <button className={`mc-btn opt-btn${partSelectMode ? ' active' : ''}`}
+                  onClick={() => setPartSelectMode(true)}
+                  onMouseEnter={(e) => showOptTip(e, t.merge.selPart)} onMouseLeave={hideOptTip}>
+                  <Layers size={11} strokeWidth={2} /> {t.merge.selPart}
+                </button>
+                <div className="opt-divider" />
+              </>
+            )}
             <span className="opt-label">{t.opts.selection}</span>
             {SEL_MODES.map(m => (
               <button key={m.id}
@@ -632,7 +648,7 @@ export default function App() {
         <div className="ps-canvas">
           {mergeOpen
             ? <SkinMergeModal
-                onClose={() => { setMergeOpen(false); setMergedPreview(null); setMergeHasSel(false) }}
+                onClose={() => { setMergeOpen(false); setMergedPreview(null); setMergeHasSel(false); setPartSelectMode(false) }}
                 onMerge={handleMergeApply}
                 initialSkinA={skinCanvas}
                 activeTool={activeTool}
@@ -641,6 +657,8 @@ export default function App() {
                 onMergedChange={handleMergedChange}
                 onHasSelChange={setMergeHasSel}
                 clearSelRef={clearMergeSelRef}
+                skinType={skinType}
+                partSelectMode={partSelectMode}
               />
             : <>
                 <PixelEditor
