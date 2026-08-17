@@ -964,15 +964,16 @@ body.picking-color { cursor: crosshair !important; }
   bottom: 48px;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--surface-3);
-  border: 1px solid var(--accent-border);
-  color: var(--accent);
-  padding: 6px 14px;
-  border-radius: 6px;
-  font-size: 0.72rem;
+  background: rgba(30, 30, 30, 0.92);
+  border: none;
+  color: #fff;
+  padding: 7px 16px;
+  border-radius: 8px;
+  font-size: 0.75rem;
   pointer-events: none;
   white-space: nowrap;
   z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
   animation: merge-toast-in 0.18s ease;
 }
 @keyframes merge-toast-in {
@@ -1140,3 +1141,11 @@ body.resizing-col { cursor: col-resize !important; user-select: none; }
 }
 .tip-icon { font-size: 0.75rem; flex-shrink: 0; }
 .tip-text { font-size: 0.6rem; color: var(--text-secondary); line-height: 1.4; }
+
+/* ═══════════════════════════════════════
+   TOOLTIP — two-line variant
+═══════════════════════════════════════ */
+.js-tooltip { display: flex; flex-direction: column; gap: 1px; }
+.js-tooltip-name { font-size: 0.62rem; color: var(--text); font-weight: 600; }
+.js-tooltip-desc { font-size: 0.58rem; color: var(--text-secondary); }
+

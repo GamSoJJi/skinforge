@@ -542,10 +542,10 @@ export default function SkinMergeModal({ onClose, onMerge, initialSkinA, activeT
 
         <div className="merge-resize-v" onMouseDown={handleABResizeStart} />
 
-        <div className="merge-half" style={{ flex: 100 - abSplit }}>
+        <div className="merge-half" style={{ flex: 100 - abSplit }} onClick={!skinB ? showToast : undefined}>
           <div className="merge-section-row">
             <span className="merge-section-label">{t.merge.outfitSkin}</span>
-            <button className="mc-btn merge-upload-btn" onClick={() => inputBRef.current?.click()}>
+            <button className="mc-btn merge-upload-btn" onClick={(e) => { e.stopPropagation(); inputBRef.current?.click() }}>
               {skinB ? t.merge.change : t.merge.load}
             </button>
             <input ref={inputBRef} type="file" accept=".png" style={{ display: 'none' }}

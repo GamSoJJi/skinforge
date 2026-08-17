@@ -49,6 +49,19 @@ export const en = {
     symRtl:      'stamp right side → left',
   },
 
+  // ── Tool descriptions (tooltip subtitle)
+  toolDesc: {
+    pen:          'Paint pixels with the active color',
+    eraser:       'Make pixels transparent',
+    fill:         'Flood-fill a connected region',
+    eyedropper:   'Pick a color from the canvas',
+    colorReplace: 'Swap all pixels of the clicked color',
+    rectSelect:   'Draw a rectangle selection',
+    magicWand:    'Select connected pixels of the same color',
+    merge:        'Copy parts of another skin onto yours',
+    symmetry:     'Mirror a body part to its opposite side',
+  },
+
   // ── Panels
   panel: {
     viewer:      'Viewer',
@@ -108,5 +121,9 @@ export const en = {
     'Click the tolerance number in Shade mode to type a value directly',
     'In Pluck mode, press ESC to clear your selection',
     'Use the button next to the skin panel title to swap skins',
+    'Mirror Stamp copies a body part to its mirrored opposite in one click',
+    'In Mirror Stamp, hovering over a leg or arm highlights both paired sides',
+    'Mirror Stamp: left-click copies left→right, right-click copies right→left',
+    'Switch between Replace, Add, and Subtract modes in the selection options bar',
   ],
 }
