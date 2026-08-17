@@ -41,7 +41,7 @@ export default function ToolPanel({ activeTool, onToolChange, mergeMode, picking
               className={`toolbar-btn${
                 (tool.id === 'merge' ? mergeMode : activeTool === tool.id && !(mergeMode && !MERGE_TOOLS.has(tool.id)) && !pickingActive)
                   ? ' active' : ''}`}
-              disabled={(mergeMode && !MERGE_TOOLS.has(tool.id) && tool.id !== 'symmetry') || pickingActive}
+              disabled={(mergeMode && !MERGE_TOOLS.has(tool.id)) || pickingActive}
               onClick={() => onToolChange(tool.id)}
               onMouseEnter={(e) => showTip(e, tool)}
               onMouseLeave={hideTip}
